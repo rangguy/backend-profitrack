@@ -1,7 +1,11 @@
 package user
 
 import (
+	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"log"
+	"time"
 )
 
 type Repository interface {
@@ -13,6 +17,33 @@ type userRepository struct {
 }
 
 func NewUserRepository(db *gorm.DB) Repository {
+	err := db.AutoMigrate(&User{})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Migrations User Success!")
+
+	var count int64
+	db.Model(&User{}).Where("username = ?", "admin").Count(&count)
+
+	if count == 0 {
+		var password []byte
+		password, err = bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+		if err != nil {
+			log.Fatal("failed to hash password: ", err)
+		}
+		adminUser := User{
+			Username:   "admin",
+			Password:   string(password),
+			CreatedAt:  time.Now(),
+			ModifiedAt: time.Now(),
+		}
+		db.Create(&adminUser)
+		log.Println("Admin user created.")
+	} else {
+		log.Println("Admin user already exists.")
+	}
+
 	return &userRepository{
 		DB: db,
 	}

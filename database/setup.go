@@ -3,19 +3,14 @@ package database
 import (
 	"fmt"
 	"github.com/joho/godotenv"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 	"os"
-	"profitrack/modules/category"
-	"profitrack/modules/user"
-	"time"
 )
 
 var DBConnection *gorm.DB
 
-func ConnectDatabase() {
+func ConnectDatabase() *gorm.DB {
 	err := godotenv.Load("config/.env")
 	if err != nil {
 		panic("Error loading .env file")
@@ -35,32 +30,6 @@ func ConnectDatabase() {
 	}
 	fmt.Println("Successfully connected to database")
 
-	err = db.AutoMigrate(&user.User{}, &category.Category{})
-	if err != nil {
-		panic(err)
-	}
-
-	var count int64
-	db.Model(&user.User{}).Where("username = ?", "admin").Count(&count)
-
-	if count == 0 {
-		var password []byte
-		password, err = bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
-		if err != nil {
-			log.Fatal("failed to hash password: ", err)
-		}
-		adminUser := user.User{
-			Username:   "admin",
-			Password:   string(password),
-			CreatedAt:  time.Now(),
-			ModifiedAt: time.Now(),
-		}
-		db.Create(&adminUser)
-		log.Println("Admin user created.")
-	} else {
-		log.Println("Admin user already exists.")
-	}
-
 	DBConnection = db
-	fmt.Println("Migration success")
+	return db
 }

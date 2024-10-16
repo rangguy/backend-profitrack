@@ -6,19 +6,21 @@ import (
 	"log"
 	"os"
 	"profitrack/database"
+	"profitrack/modules/category"
 	"profitrack/modules/user"
 )
 
 func main() {
-	database.ConnectDatabase()
+	db := database.ConnectDatabase()
 
-	InitiateRouter(database.DBConnection)
+	InitiateRouter(db)
 }
 
 func InitiateRouter(db *gorm.DB) {
 	router := gin.Default()
 
 	user.Initiator(router, db)
+	category.Initiator(router, db)
 
 	err := router.Run(":" + os.Getenv("PORT"))
 	if err != nil {
