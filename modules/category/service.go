@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"profitrack/helpers"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -61,17 +62,24 @@ func (service *categoryService) CreateCategoryService(ctx *gin.Context) {
 		return
 	}
 
+	if newCategory.Name == "" {
+		response := map[string]string{"error": "tolong masukan nama kategori"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
 	newCategory.CreatedAt = time.Now()
 	newCategory.ModifiedAt = time.Now()
 
 	err := service.repository.CreateCategoryRepository(&newCategory)
 	if err != nil {
-		if err.Error() != "duplicate key value violates unique constraint \"uni_categories_name\"" {
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_categories_name\"") {
 			response := map[string]string{"error": "nama kategori sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
 		}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, err.Error())
+		response := map[string]string{"error": "gagal menambahkan data kategori"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
@@ -135,7 +143,7 @@ func (service *categoryService) UpdateCategoryService(ctx *gin.Context) {
 	}
 
 	if existingCategory.Name == category.Name {
-		response := map[string]string{"error": "masukkan data nama yang baru"}
+		response := map[string]string{"error": "masukkan data nama kategori yang baru"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
@@ -145,7 +153,7 @@ func (service *categoryService) UpdateCategoryService(ctx *gin.Context) {
 
 	err = service.repository.UpdateCategoryRepository(existingCategory)
 	if err != nil {
-		if err.Error() == "duplicate key value violates unique constraint \"uni_categories_name\"" {
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_categories_name\"") {
 			response := map[string]string{"message": "nama kategori sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
