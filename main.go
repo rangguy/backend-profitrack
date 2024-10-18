@@ -7,6 +7,7 @@ import (
 	"os"
 	"profitrack/database"
 	"profitrack/modules/category"
+	"profitrack/modules/criteria"
 	"profitrack/modules/product"
 	"profitrack/modules/user"
 )
@@ -23,6 +24,7 @@ func InitiateRouter(db *gorm.DB) {
 	user.Initiator(router, db)
 	category.Initiator(router, db)
 	product.Initiator(router, db)
+	criteria.Initiator(router, db)
 
 	err := router.Run(":" + os.Getenv("PORT"))
 	if err != nil {

@@ -7,10 +7,10 @@ import (
 
 type Repository interface {
 	GetAllProductRepository() (result []Product, err error)
-	CreateProductRepository(category *Product) (err error)
-	GetProductByIdRepository(categoryID int) (category Product, err error)
-	UpdateProductRepository(category Product) (err error)
-	DeleteProductRepository(category Product) (err error)
+	CreateProductRepository(product *Product) (err error)
+	GetProductByIdRepository(productID int) (product Product, err error)
+	UpdateProductRepository(product Product) (err error)
+	DeleteProductRepository(product Product) (err error)
 }
 
 type productRepository struct {
