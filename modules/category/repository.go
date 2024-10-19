@@ -1,7 +1,6 @@
 package category
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -18,13 +17,6 @@ type categoryRepository struct {
 }
 
 func NewCategoryRepository(db *gorm.DB) Repository {
-	err := db.AutoMigrate(&Category{})
-	//err := db.Migrator().DropTable(&Category{})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Migrations Category Success!")
-
 	return &categoryRepository{
 		DB: db,
 	}

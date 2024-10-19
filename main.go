@@ -6,15 +6,18 @@ import (
 	"log"
 	"os"
 	"profitrack/database"
+	"profitrack/database/migrations"
 	"profitrack/modules/category"
 	"profitrack/modules/criteria"
 	"profitrack/modules/product"
 	"profitrack/modules/user"
+	"profitrack/modules/value"
 )
 
 func main() {
 	db := database.ConnectDatabase()
 
+	migrations.Migrations(db)
 	InitiateRouter(db)
 }
 
@@ -25,6 +28,7 @@ func InitiateRouter(db *gorm.DB) {
 	category.Initiator(router, db)
 	product.Initiator(router, db)
 	criteria.Initiator(router, db)
+	value.Initiator(router, db)
 
 	err := router.Run(":" + os.Getenv("PORT"))
 	if err != nil {

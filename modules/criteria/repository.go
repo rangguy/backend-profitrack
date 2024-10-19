@@ -1,7 +1,6 @@
 package criteria
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -18,18 +17,6 @@ type criteriaRepository struct {
 }
 
 func NewCriteriaRepository(db *gorm.DB) Repository {
-	err := db.Migrator().DropTable(&Criteria{})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Migrations Drop Criteria Success!")
-
-	err = db.AutoMigrate(&Criteria{})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Migrations Up Criteria Success!")
-
 	return &criteriaRepository{
 		DB: db,
 	}

@@ -156,7 +156,7 @@ func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
 
 	err = service.repository.UpdateCriteriaRepository(existingCriteria)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_criterias_name\"") {
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_criteria_name\"") {
 			response := map[string]string{"message": "nama kriteria sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return

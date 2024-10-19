@@ -1,7 +1,6 @@
 package product
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -18,13 +17,6 @@ type productRepository struct {
 }
 
 func NewProductRepository(db *gorm.DB) Repository {
-	err := db.AutoMigrate(&Product{})
-	//err := db.Migrator().DropTable(&Product{})
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Migrations Product Success!")
-
 	return &productRepository{
 		DB: db,
 	}
