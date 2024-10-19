@@ -1,5 +1,5 @@
 ## Dokumentasi API
-## https://quiz-sanbercode-go-production.up.railway.app/
+## https://profitrack-production.up.railway.app
 Proyek ini menggunakan **JWT Authentication**, di mana pengguna harus melakukan login terlebih dahulu untuk
 mengakses endpoint API. Login dapat dilakkukan dengan data pengguna yang telah di-*seed* saat migrasi database. Pengguna yang sudah terdaftar adalah:
 
