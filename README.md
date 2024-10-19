@@ -476,9 +476,9 @@ Endpoint ini digunakan untuk melihat detail produk berdasarkan ID tertentu.
   ```
 
 
-### 4. Memperbarui Kriteria Berdasarkan ID
+### 4. Memperbarui Produk Berdasarkan ID
 
-**Endpoint**: `PUT /api/criterias/:id`
+**Endpoint**: `PUT /api/products/:id`
 
 Endpoint ini digunakan untuk memperbarui data kriteria berdasarkan ID tertentu.
 
