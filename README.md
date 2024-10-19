@@ -1,7 +1,7 @@
 ## Dokumentasi API
 ## https://quiz-sanbercode-go-production.up.railway.app/
-Proyek ini menggunakan **JWT Authentication**, di mana pengguna harus menyediakan **username** dan **password** untuk
-mengakses endpoint API. Autentikasi ini didasarkan pada data pengguna yang telah di-*seed* saat migrasi database. Pengguna yang sudah terdaftar adalah:
+Proyek ini menggunakan **JWT Authentication**, di mana pengguna harus melakukan login terlebih dahulu untuk
+mengakses endpoint API. Login dapat dilakkukan dengan data pengguna yang telah di-*seed* saat migrasi database. Pengguna yang sudah terdaftar adalah:
 
 - **Username**: `admin`
 - **Password**: `admin`
@@ -10,6 +10,16 @@ mengakses endpoint API. Autentikasi ini didasarkan pada data pengguna yang telah
 
 Pastikan untuk memberikan JWT token yang tersimpan di Cookies yang benar melalui header Bearer Token saat mengakses
 API. Server akan memverifikasi kredensial tersebut dan memberikan akses jika cocok.
+
+Jika Authentikasi tidak dilakukan dan mencoba untuk mengakses API Kategori, Kriteria, Produk dan Value, maka akan memberikan response sebagai berikut:
+
+```json
+  {
+    "details": "token is malformed: token contains an invalid number of segments",
+    "error": "Invalid token"
+  }
+ ```
+
 
 ## API User
 
@@ -559,5 +569,82 @@ Endpoint ini digunakan untuk menghapus produk berdasarkan ID tertentu.
   ```json
   {
     "error": "Produk dengan ID:%d tidak ditemukan"
+  }
+  ```
+
+## API Value
+
+### 1. Melihat Semua Nilai dari Produk
+
+**Endpoint**: `GET /api/values`
+
+Endpoint ini digunakan untuk melihat daftar semua nilai produk yang tersedia.
+
+- **Response** (jika terdapat data):
+  ```json
+  {
+    "values": values
+  }
+  ```
+
+- **Response** (jika tidak ada data):
+  ```json
+  {
+    "message": "data nilai masih kosong"
+  }
+  ```
+
+### 2. Menambahkan Nilai dari semua Produk yang ada
+
+**Endpoint**: `POST /api/values`
+
+Endpoint ini digunakan untuk menambahkan nilai dari semua produk yang ada.
+
+- **Response** (jika berhasil):
+  ```json
+  {
+    "message": "nilai produk berhasil dihitung untuk semua kriteria dan disimpan"
+  }
+  ```
+  
+- **Response** (jika berhasil):
+  ```json
+  {
+    "message": "nilai produk berhasil dihitung untuk semua kriteria dan disimpan"
+  }
+  ```
+
+- **Response** (jika gagal mengambil data kriteria):
+  ```json
+  {
+    "error": "gagal mengambil data kriteria"
+  }
+  ```
+
+- **Response** (jika gagal mengambil data produk):
+  ```json
+  {
+    "error": "gagal mengambil data produk"
+  }
+  ```
+  
+- **Response** (jika mendapatkan data kriteria yang tidak dikenali):
+  ```json
+  {
+    "error": "kriteria tidak dikenali"
+  }
+  ```
+
+
+### 3. Menghapus Semua Nilai Produk
+
+**Endpoint**: `DELETE /api/values`
+
+Endpoint ini digunakan untuk menghapus seluruh nilai produk.
+
+- **Response** (jika berhasil):
+  ```json
+  {
+    "message": "semua data nilai berhasil dihapus"
   }
   ```

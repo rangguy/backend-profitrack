@@ -196,27 +196,6 @@ func (service *categoryService) DeleteCategoryService(ctx *gin.Context) {
 		return
 	}
 
-	response := map[string]string{"error": fmt.Sprintf("Kategori dengan ID:%d berhasil dihapus", id)}
+	response := map[string]string{"message": fmt.Sprintf("Kategori dengan ID:%d berhasil dihapus", id)}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
-
-//func (service *categoryService) GetBookByCategoryService(ctx *gin.Context) {
-//	categoryID, err := strconv.Atoi(ctx.Param("id"))
-//	if err != nil {
-//		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Invalid category ID"})
-//		return
-//	}
-//
-//	books, err := service.repository.GetBookByCategoryRepository(database.DbConnection, categoryID)
-//	if err != nil {
-//		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengembalikan data buku"})
-//		return
-//	}
-//
-//	if len(books) == 0 {
-//		ctx.JSON(http.StatusOK, gin.H{"message": "Tidak ada buku untuk kategori ini"})
-//		return
-//	}
-//
-//	ctx.JSON(http.StatusOK, books)
-//}

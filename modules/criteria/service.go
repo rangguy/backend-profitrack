@@ -199,6 +199,6 @@ func (service *criteriaService) DeleteCriteriaService(ctx *gin.Context) {
 		return
 	}
 
-	response := map[string]string{"error": fmt.Sprintf("Kriteria dengan ID:%d berhasil dihapus", id)}
+	response := map[string]string{"message": fmt.Sprintf("Kriteria dengan ID:%d berhasil dihapus", id)}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }

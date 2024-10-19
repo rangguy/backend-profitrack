@@ -150,7 +150,7 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	existingProduct, err := service.repository.GetProductByIdRepository(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			response = map[string]string{"error": fmt.Sprintf("Kategori dengan ID:%d tidak ditemukan", id)}
+			response = map[string]string{"error": fmt.Sprintf("Produk dengan ID:%d tidak ditemukan", id)}
 			helpers.ResponseJSON(ctx, http.StatusNotFound, response)
 			return
 		}
@@ -235,6 +235,6 @@ func (service *productService) DeleteProductService(ctx *gin.Context) {
 		return
 	}
 
-	response = map[string]string{"error": fmt.Sprintf("Produk dengan ID:%d berhasil dihapus", id)}
+	response = map[string]string{"message": fmt.Sprintf("Produk dengan ID:%d berhasil dihapus", id)}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
