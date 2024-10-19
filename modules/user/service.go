@@ -14,6 +14,7 @@ import (
 
 type Service interface {
 	LoginService(ctx *gin.Context)
+	LogoutService(ctx *gin.Context)
 }
 
 type userService struct {
@@ -47,7 +48,7 @@ func (service *userService) LoginService(ctx *gin.Context) {
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userRequest.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userRequest.Password)); err != nil {
 		response := map[string]string{"message": "Username atau password salah"}
 		helpers.ResponseJSON(ctx, http.StatusUnauthorized, response)
 		return
@@ -70,7 +71,6 @@ func (service *userService) LoginService(ctx *gin.Context) {
 		return
 	}
 
-	// Set token to cookie
 	http.SetCookie(ctx.Writer, &http.Cookie{
 		Name:     "token",
 		Path:     "/",
@@ -78,7 +78,19 @@ func (service *userService) LoginService(ctx *gin.Context) {
 		HttpOnly: true,
 	})
 
-	// Return success message without token
 	response := map[string]string{"message": "login berhasil"}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
+}
+
+func (service *userService) LogoutService(ctx *gin.Context) {
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     "token",
+		Path:     "/",
+		Value:    "",
+		HttpOnly: true,
+		MaxAge:   -1,
+	})
+
+	response := map[string]string{"message": "logout berhasil"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }

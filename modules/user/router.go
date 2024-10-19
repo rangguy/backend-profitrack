@@ -11,4 +11,5 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 
 	api := router.Group("/api")
 	api.POST("/login", service.LoginService)
+	api.GET("/logout", service.LogoutService)
 }
