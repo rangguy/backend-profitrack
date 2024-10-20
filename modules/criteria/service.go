@@ -43,7 +43,7 @@ func (service *criteriaService) GetAllCriteriaService(ctx *gin.Context) {
 			ID:     criteria.ID,
 			Name:   criteria.Name,
 			Weight: criteria.Weight,
-			Type:   criteria.Name,
+			Type:   criteria.Type,
 		})
 	}
 

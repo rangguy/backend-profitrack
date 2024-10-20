@@ -142,6 +142,12 @@ func (service *categoryService) UpdateCategoryService(ctx *gin.Context) {
 		return
 	}
 
+	if category.Name == "" {
+		response := map[string]string{"error": "masukkan nama kategori"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
 	if existingCategory.Name == category.Name {
 		response := map[string]string{"error": "masukkan data nama kategori yang baru"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
