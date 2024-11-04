@@ -7,6 +7,7 @@ import (
 	"os"
 	"profitrack/database"
 	"profitrack/database/migrations"
+	"profitrack/middleware"
 	"profitrack/modules/category"
 	"profitrack/modules/criteria"
 	"profitrack/modules/product"
@@ -24,6 +25,7 @@ func main() {
 func InitiateRouter(db *gorm.DB) {
 	router := gin.Default()
 
+	router.Use(middleware.CORSMiddleware())
 	user.Initiator(router, db)
 	category.Initiator(router, db)
 	product.Initiator(router, db)

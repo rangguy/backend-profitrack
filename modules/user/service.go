@@ -54,7 +54,7 @@ func (service *userService) LoginService(ctx *gin.Context) {
 		return
 	}
 
-	expiredTime := time.Now().Add(time.Minute * 15)
+	expiredTime := time.Now().Add(time.Hour * 2)
 	claims := &config.JWTClaim{
 		Username: userRequest.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -75,7 +75,7 @@ func (service *userService) LoginService(ctx *gin.Context) {
 		Name:     "token",
 		Path:     "/",
 		Value:    token,
-		HttpOnly: true,
+		HttpOnly: false,
 	})
 
 	response := map[string]string{"message": "login berhasil"}
