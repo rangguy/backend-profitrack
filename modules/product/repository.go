@@ -23,7 +23,7 @@ func NewProductRepository(db *gorm.DB) Repository {
 }
 
 func (r *productRepository) GetAllProductRepository() (result []Product, err error) {
-	err = r.DB.Find(&result).Error
+	err = r.DB.Preload("Category").Find(&result).Error
 	return result, err
 }
 
@@ -33,7 +33,7 @@ func (r *productRepository) CreateProductRepository(product *Product) (err error
 }
 
 func (r *productRepository) GetProductByIdRepository(productID int) (product Product, err error) {
-	err = r.DB.First(&product, productID).Error
+	err = r.DB.Preload("Category").First(&product, productID).Error
 	return product, err
 }
 

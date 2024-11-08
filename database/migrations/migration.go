@@ -12,7 +12,6 @@ import (
 
 func Migrations(db *gorm.DB) {
 	var err error
-
 	err = db.AutoMigrate(&user.User{}, &category.Category{}, &product.Product{}, &criteria.Criteria{}, &value.Value{})
 	if err != nil {
 		panic(err)

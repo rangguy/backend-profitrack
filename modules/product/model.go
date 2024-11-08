@@ -15,7 +15,7 @@ type Product struct {
 	InitialStock int               `gorm:"integer;not null" json:"initial_stock"`
 	FinalStock   int               `gorm:"integer;not null" json:"final_stock"`
 	CategoryID   int               `gorm:"integer;not null" json:"category_id"`
-	Category     category.Category `gorm:"foreignkey:CategoryID" json:"-"`
+	Category     category.Category `gorm:"foreignkey:CategoryID" json:"category"`
 	CreatedAt    time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	ModifiedAt   time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"modified_at"`
 }
@@ -30,4 +30,5 @@ type ResponseProduct struct {
 	InitialStock int    `json:"initial_stock"`
 	FinalStock   int    `json:"final_stock"`
 	CategoryID   int    `json:"category_id"`
+	CategoryName string `json:"category_name"`
 }

@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"profitrack/helpers"
+	"profitrack/modules/category"
 	"strconv"
 	"strings"
 	"time"
@@ -21,12 +22,14 @@ type Service interface {
 }
 
 type productService struct {
-	repository Repository
+	repository         Repository
+	categoryRepository category.Repository
 }
 
-func NewProductService(repo Repository) Service {
+func NewProductService(repo Repository, categoryRepo category.Repository) Service {
 	return &productService{
-		repository: repo,
+		repository:         repo,
+		categoryRepository: categoryRepo,
 	}
 }
 
@@ -49,6 +52,7 @@ func (service *productService) GetAllProductService(ctx *gin.Context) {
 			InitialStock: product.InitialStock,
 			FinalStock:   product.FinalStock,
 			CategoryID:   product.CategoryID,
+			CategoryName: product.Category.Name,
 		})
 	}
 
@@ -98,6 +102,15 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 		return
 	}
 
+	categoryData, err := service.categoryRepository.GetCategoryByIdRepository(newProduct.CategoryID)
+	if err != nil {
+		response = map[string]string{"error": "gagal mengambil kategori"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	newProduct.Category = categoryData
+
 	ctx.JSON(http.StatusCreated, newProduct)
 }
 
@@ -127,7 +140,18 @@ func (service *productService) GetProductByIdService(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, product)
+	ctx.JSON(http.StatusOK, ResponseProduct{
+		ID:           product.ID,
+		Name:         product.Name,
+		NetProfit:    product.NetProfit,
+		GrossProfit:  product.GrossProfit,
+		GrossSale:    product.GrossSale,
+		PurchaseCost: product.PurchaseCost,
+		InitialStock: product.InitialStock,
+		FinalStock:   product.FinalStock,
+		CategoryID:   product.CategoryID,
+		CategoryName: product.Category.Name,
+	})
 }
 
 func (service *productService) UpdateProductService(ctx *gin.Context) {
