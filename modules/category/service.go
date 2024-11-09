@@ -62,6 +62,8 @@ func (service *categoryService) CreateCategoryService(ctx *gin.Context) {
 		return
 	}
 
+	newCategory.Name = strings.TrimSpace(newCategory.Name)
+
 	if newCategory.Name == "" {
 		response := map[string]string{"error": "tolong masukan nama kategori"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
@@ -197,6 +199,12 @@ func (service *categoryService) DeleteCategoryService(ctx *gin.Context) {
 	category.ID = id
 	err = service.repository.DeleteCategoryRepository(category)
 	if err != nil {
+		if strings.Contains(err.Error(), "violates foreign key constraint") {
+			response := map[string]string{"error": "Kategori tidak dapat dihapus karena masih digunakan."}
+			helpers.ResponseJSON(ctx, http.StatusConflict, response)
+			return
+		}
+
 		response := map[string]string{"error": "gagal menghapus data kategori"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
