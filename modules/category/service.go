@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"profitrack/helpers"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -47,7 +48,7 @@ func (service *categoryService) GetAllCategoryService(ctx *gin.Context) {
 	}
 
 	if result == nil {
-		response := map[string]string{"message": "data kategori masih kosong"}
+		response := map[string]string{"message": "Data kategori masih kosong"}
 		helpers.ResponseJSON(ctx, http.StatusOK, response)
 		return
 	} else {
@@ -65,7 +66,13 @@ func (service *categoryService) CreateCategoryService(ctx *gin.Context) {
 	newCategory.Name = strings.TrimSpace(newCategory.Name)
 
 	if newCategory.Name == "" {
-		response := map[string]string{"error": "tolong masukan nama kategori"}
+		response := map[string]string{"error": "Tolong masukan nama kategori"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	if match, _ := regexp.MatchString(`[a-zA-Z]`, newCategory.Name); !match {
+		response := map[string]string{"error": "Nama kategori harus mengandung setidaknya satu huruf"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
@@ -76,7 +83,7 @@ func (service *categoryService) CreateCategoryService(ctx *gin.Context) {
 	err := service.repository.CreateCategoryRepository(&newCategory)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_categories_name\"") {
-			response := map[string]string{"error": "nama kategori sudah ada"}
+			response := map[string]string{"error": "Nama kategori sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
 		}
@@ -127,7 +134,7 @@ func (service *categoryService) UpdateCategoryService(ctx *gin.Context) {
 	}
 
 	if err = ctx.ShouldBindJSON(&category); err != nil {
-		response := map[string]string{"message": "failed to read json"}
+		response := map[string]string{"error": "failed to read json"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
@@ -145,13 +152,13 @@ func (service *categoryService) UpdateCategoryService(ctx *gin.Context) {
 	}
 
 	if category.Name == "" {
-		response := map[string]string{"error": "masukkan nama kategori"}
+		response := map[string]string{"error": "Masukkan nama kategori"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
-	if existingCategory.Name == category.Name {
-		response := map[string]string{"error": "masukkan data nama kategori yang baru"}
+	if strings.ToLower(existingCategory.Name) == strings.ToLower(category.Name) {
+		response := map[string]string{"error": "Masukkan data nama kategori yang baru"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
@@ -162,7 +169,7 @@ func (service *categoryService) UpdateCategoryService(ctx *gin.Context) {
 	err = service.repository.UpdateCategoryRepository(existingCategory)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_categories_name\"") {
-			response := map[string]string{"message": "nama kategori sudah ada"}
+			response := map[string]string{"error": "Nama kategori sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
 		}
@@ -205,7 +212,7 @@ func (service *categoryService) DeleteCategoryService(ctx *gin.Context) {
 			return
 		}
 
-		response := map[string]string{"error": "gagal menghapus data kategori"}
+		response := map[string]string{"error": "Gagal menghapus data kategori"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}

@@ -75,7 +75,7 @@ func (service *criteriaService) CreateCriteriaService(ctx *gin.Context) {
 	err := service.repository.CreateCriteriaRepository(&newCriteria)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_criteria_name\"") {
-			response := map[string]string{"error": "nama kriteria sudah ada"}
+			response := map[string]string{"error": "Nama kriteria sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
 		}
@@ -126,7 +126,7 @@ func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
 	}
 
 	if err = ctx.ShouldBindJSON(&criteria); err != nil {
-		response := map[string]string{"message": "failed to read json"}
+		response := map[string]string{"error": "failed to read json"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
@@ -143,25 +143,25 @@ func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
 		return
 	}
 
-	if existingCriteria.Name == criteria.Name {
-		response := map[string]string{"error": "masukkan data nama kriteria yang baru"}
+	if criteria.Weight == 0 || criteria.Type == "" {
+		response := map[string]string{"error": "inputan tidak valid"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
-	existingCriteria.Name = criteria.Name
+	if existingCriteria.Weight == criteria.Weight && existingCriteria.Type == criteria.Type {
+		response := map[string]string{"error": "Masukkan setidaknya satu data baru"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
 	existingCriteria.Weight = criteria.Weight
 	existingCriteria.Type = criteria.Type
 	existingCriteria.ModifiedAt = time.Now()
 
 	err = service.repository.UpdateCriteriaRepository(existingCriteria)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_criteria_name\"") {
-			response := map[string]string{"message": "nama kriteria sudah ada"}
-			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-			return
-		}
-		response := map[string]string{"error": "gagal mengubah data kategori"}
+		response := map[string]string{"error": "Gagal mengubah data kriteria"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
