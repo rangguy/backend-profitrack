@@ -1,11 +1,11 @@
 package middleware
 
 import (
+	"backend-profitrack/config"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
-	"profitrack/config"
 	"strings"
 )
 

@@ -1,10 +1,10 @@
 package product
 
 import (
+	"backend-profitrack/middleware"
+	"backend-profitrack/modules/category"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"profitrack/middleware"
-	"profitrack/modules/category"
 )
 
 func Initiator(router *gin.Engine, db *gorm.DB) {

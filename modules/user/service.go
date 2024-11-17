@@ -1,14 +1,14 @@
 package user
 
 import (
+	"backend-profitrack/config"
+	"backend-profitrack/helpers"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
-	"profitrack/config"
-	"profitrack/helpers"
 	"time"
 )
 

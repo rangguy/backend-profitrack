@@ -1,11 +1,11 @@
 package value
 
 import (
+	"backend-profitrack/helpers"
+	"backend-profitrack/modules/criteria"
+	"backend-profitrack/modules/product"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"profitrack/helpers"
-	"profitrack/modules/criteria"
-	"profitrack/modules/product"
 	"strings"
 	"time"
 )

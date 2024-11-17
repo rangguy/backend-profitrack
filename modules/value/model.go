@@ -1,8 +1,8 @@
 package value
 
 import (
-	"profitrack/modules/criteria"
-	"profitrack/modules/product"
+	"backend-profitrack/modules/criteria"
+	"backend-profitrack/modules/product"
 	"time"
 )
 

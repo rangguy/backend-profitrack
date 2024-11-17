@@ -1,12 +1,12 @@
 package category
 
 import (
+	"backend-profitrack/helpers"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
-	"profitrack/helpers"
 	"regexp"
 	"strconv"
 	"strings"

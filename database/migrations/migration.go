@@ -1,13 +1,13 @@
 package migrations
 
 import (
+	"backend-profitrack/modules/category"
+	"backend-profitrack/modules/criteria"
+	"backend-profitrack/modules/product"
+	"backend-profitrack/modules/user"
+	"backend-profitrack/modules/value"
 	"fmt"
 	"gorm.io/gorm"
-	"profitrack/modules/category"
-	"profitrack/modules/criteria"
-	"profitrack/modules/product"
-	"profitrack/modules/user"
-	"profitrack/modules/value"
 )
 
 func Migrations(db *gorm.DB) {

@@ -1,7 +1,7 @@
 package product
 
 import (
-	"profitrack/modules/category"
+	"backend-profitrack/modules/category"
 	"time"
 )
 

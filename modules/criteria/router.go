@@ -1,9 +1,9 @@
 package criteria
 
 import (
+	"backend-profitrack/middleware"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"profitrack/middleware"
 )
 
 func Initiator(router *gin.Engine, db *gorm.DB) {

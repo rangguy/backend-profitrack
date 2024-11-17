@@ -1,6 +1,8 @@
 package product
 
 import (
+	"backend-profitrack/helpers"
+	"backend-profitrack/modules/category"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -9,8 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"profitrack/helpers"
-	"profitrack/modules/category"
 	"strconv"
 	"strings"
 	"time"

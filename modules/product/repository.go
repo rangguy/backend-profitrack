@@ -1,8 +1,8 @@
 package product
 
 import (
+	"backend-profitrack/modules/category"
 	"gorm.io/gorm"
-	"profitrack/modules/category"
 )
 
 type Repository interface {
