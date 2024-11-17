@@ -12,9 +12,9 @@ type Product struct {
 	GrossProfit  int               `gorm:"integer;not null" json:"gross_profit"`
 	GrossSale    int               `gorm:"integer;not null" json:"gross_sale"`
 	PurchaseCost int               `gorm:"integer;not null" json:"purchase_cost"`
-	InitialStock int               `gorm:"integer;not null" json:"initial_stock"`
-	FinalStock   int               `gorm:"integer;not null" json:"final_stock"`
-	CategoryID   int               `gorm:"integer;not null" json:"category_id"`
+	InitialStock int               `gorm:"integer" json:"initial_stock"`
+	FinalStock   int               `gorm:"integer" json:"final_stock"`
+	CategoryID   int               `gorm:"integer" json:"category_id"`
 	Category     category.Category `gorm:"foreignkey:CategoryID" json:"category"`
 	CreatedAt    time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	ModifiedAt   time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"modified_at"`
@@ -31,4 +31,15 @@ type ResponseProduct struct {
 	FinalStock   int    `json:"final_stock"`
 	CategoryID   int    `json:"category_id"`
 	CategoryName string `json:"category_name"`
+}
+
+type ExcelProduct struct {
+	Name         string `validate:"required"`
+	NetProfit    int    `validate:"required"`
+	GrossProfit  int    `validate:"required"`
+	GrossSale    int    `validate:"required"`
+	PurchaseCost int    `validate:"required"`
+	InitialStock int    `validate:"required"`
+	FinalStock   int    `validate:"required"`
+	CategoryName string `validate:"required"`
 }

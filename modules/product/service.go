@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 	"net/http"
+	"os"
+	"path/filepath"
 	"profitrack/helpers"
 	"profitrack/modules/category"
 	"strconv"
@@ -19,6 +22,8 @@ type Service interface {
 	GetProductByIdService(ctx *gin.Context)
 	UpdateProductService(ctx *gin.Context)
 	DeleteProductService(ctx *gin.Context)
+	ImportExcelService(ctx *gin.Context) // Tambahkan method baru
+	ExportExcelService(ctx *gin.Context) // Tambahkan method baru
 }
 
 type productService struct {
@@ -261,4 +266,128 @@ func (service *productService) DeleteProductService(ctx *gin.Context) {
 
 	response = map[string]string{"message": fmt.Sprintf("Produk dengan ID:%d berhasil dihapus", id)}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
+}
+
+func (service *productService) ImportExcelService(ctx *gin.Context) {
+	file, err := ctx.FormFile("file")
+	if err != nil {
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": "File tidak ditemukan"})
+		return
+	}
+
+	if filepath.Ext(file.Filename) != ".xlsx" {
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": "Format file harus xlsx"})
+		return
+	}
+
+	// Simpan file sementara
+	tempFile := fmt.Sprintf("temp/%d-%s", time.Now().Unix(), file.Filename)
+	if err := ctx.SaveUploadedFile(file, tempFile); err != nil {
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
+		return
+	}
+	defer os.Remove(tempFile)
+
+	// Baca file Excel
+	xlsx, err := excelize.OpenFile(tempFile)
+	if err != nil {
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal membaca file Excel"})
+		return
+	}
+	defer xlsx.Close()
+
+	rows, err := xlsx.GetRows("Sheet1")
+	if err != nil {
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal membaca sheet"})
+		return
+	}
+
+	var products []Product
+	for i, row := range rows {
+		if i == 0 { // Skip header
+			continue
+		}
+
+		if len(row) < 8 { // Validasi jumlah kolom
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Format tidak valid pada baris %d", i+1)})
+			return
+		}
+
+		// Konversi string ke int
+		netProfit, _ := strconv.Atoi(row[1])
+		grossProfit, _ := strconv.Atoi(row[2])
+		grossSale, _ := strconv.Atoi(row[3])
+		purchaseCost, _ := strconv.Atoi(row[4])
+		initialStock, _ := strconv.Atoi(row[5])
+		finalStock, _ := strconv.Atoi(row[6])
+
+		// Dapatkan category ID berdasarkan nama
+		category, err := service.repository.GetCategoryByNameRepository(row[7])
+		if err != nil {
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Kategori '%s' tidak ditemukan", row[7])})
+			return
+		}
+
+		product := Product{
+			Name:         row[0],
+			NetProfit:    netProfit,
+			GrossProfit:  grossProfit,
+			GrossSale:    grossSale,
+			PurchaseCost: purchaseCost,
+			InitialStock: initialStock,
+			FinalStock:   finalStock,
+			CategoryID:   category.ID,
+			CreatedAt:    time.Now(),
+			ModifiedAt:   time.Now(),
+		}
+		products = append(products, product)
+	}
+
+	// Bulk insert
+	if err := service.repository.BulkCreateProductRepository(products); err != nil {
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data"})
+		return
+	}
+
+	helpers.ResponseJSON(ctx, http.StatusOK, gin.H{"message": fmt.Sprintf("Berhasil import %d produk", len(products))})
+}
+
+func (service *productService) ExportExcelService(ctx *gin.Context) {
+	products, err := service.repository.GetAllProductRepository()
+	if err != nil {
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data produk"})
+		return
+	}
+
+	// Buat file Excel baru
+	f := excelize.NewFile()
+	defer f.Close()
+
+	// Buat header
+	headers := []string{"Nama Produk", "Net Profit", "Gross Profit", "Gross Sale", "Purchase Cost", "Initial Stock", "Final Stock"}
+	for i, header := range headers {
+		cell := string(rune('A'+i)) + "1"
+		f.SetCellValue("Sheet1", cell, header)
+	}
+
+	// Isi data
+	for i, product := range products {
+		row := i + 2
+		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), product.Name)
+		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), product.NetProfit)
+		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.GrossProfit)
+		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), product.GrossSale)
+		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", row), product.PurchaseCost)
+		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.InitialStock)
+		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), product.FinalStock)
+	}
+
+	// Set response header
+	ctx.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	ctx.Header("Content-Disposition", "attachment; filename=products.xlsx")
+
+	if err := f.Write(ctx.Writer); err != nil {
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal membuat file Excel"})
+		return
+	}
 }

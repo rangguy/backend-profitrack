@@ -20,4 +20,6 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	api.POST("/products", service.CreateProductService)
 	api.PUT("/products/:id", service.UpdateProductService)
 	api.DELETE("/products/:id", service.DeleteProductService)
+	api.POST("/products/import", service.ImportExcelService)
+	api.GET("/products/export", service.ExportExcelService)
 }
