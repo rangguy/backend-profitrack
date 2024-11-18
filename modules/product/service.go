@@ -22,8 +22,8 @@ type Service interface {
 	GetProductByIdService(ctx *gin.Context)
 	UpdateProductService(ctx *gin.Context)
 	DeleteProductService(ctx *gin.Context)
-	ImportExcelService(ctx *gin.Context) // Tambahkan method baru
-	ExportExcelService(ctx *gin.Context) // Tambahkan method baru
+	ImportExcelService(ctx *gin.Context)
+	ExportExcelService(ctx *gin.Context)
 }
 
 type productService struct {
@@ -344,7 +344,11 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 	}
 
 	// Bulk insert
-	if err := service.repository.BulkCreateProductRepository(products); err != nil {
+	if err = service.repository.BulkCreateProductRepository(products); err != nil {
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": "Beberapa produk sudah ada (duplikat nama produk)"})
+			return
+		}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data"})
 		return
 	}
