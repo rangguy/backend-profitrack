@@ -52,7 +52,7 @@ func (service *productService) GetAllProductService(ctx *gin.Context) {
 			Name:         product.Name,
 			NetProfit:    product.NetProfit,
 			GrossProfit:  product.GrossProfit,
-			GrossSale:    product.GrossSale,
+			PriceSale:    product.PriceSale,
 			PurchaseCost: product.PurchaseCost,
 			InitialStock: product.InitialStock,
 			FinalStock:   product.FinalStock,
@@ -82,7 +82,7 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 	if newProduct.Name == "" ||
 		newProduct.NetProfit == 0 ||
 		newProduct.GrossProfit == 0 ||
-		newProduct.GrossSale == 0 ||
+		newProduct.PriceSale == 0 ||
 		newProduct.PurchaseCost == 0 ||
 		newProduct.InitialStock == 0 ||
 		newProduct.FinalStock == 0 ||
@@ -150,7 +150,7 @@ func (service *productService) GetProductByIdService(ctx *gin.Context) {
 		Name:         product.Name,
 		NetProfit:    product.NetProfit,
 		GrossProfit:  product.GrossProfit,
-		GrossSale:    product.GrossSale,
+		PriceSale:    product.PriceSale,
 		PurchaseCost: product.PurchaseCost,
 		InitialStock: product.InitialStock,
 		FinalStock:   product.FinalStock,
@@ -191,7 +191,7 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	if product.Name == "" ||
 		product.NetProfit == 0 ||
 		product.GrossProfit == 0 ||
-		product.GrossSale == 0 ||
+		product.PriceSale == 0 ||
 		product.PurchaseCost == 0 ||
 		product.InitialStock == 0 ||
 		product.FinalStock == 0 ||
@@ -201,7 +201,7 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 		return
 	}
 
-	if existingProduct.Name == product.Name && existingProduct.NetProfit == product.NetProfit && existingProduct.GrossProfit == product.GrossProfit && existingProduct.GrossSale == product.GrossSale && existingProduct.PurchaseCost == product.PurchaseCost && existingProduct.InitialStock == product.InitialStock && existingProduct.FinalStock == product.FinalStock && existingProduct.CategoryID == product.CategoryID {
+	if existingProduct.Name == product.Name && existingProduct.NetProfit == product.NetProfit && existingProduct.GrossProfit == product.GrossProfit && existingProduct.PriceSale == product.PriceSale && existingProduct.PurchaseCost == product.PurchaseCost && existingProduct.InitialStock == product.InitialStock && existingProduct.FinalStock == product.FinalStock && existingProduct.CategoryID == product.CategoryID {
 		response = map[string]string{"error": "masukkan minimal satu data yang baru"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
@@ -210,7 +210,7 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	existingProduct.Name = product.Name
 	existingProduct.NetProfit = product.NetProfit
 	existingProduct.GrossProfit = product.GrossProfit
-	existingProduct.GrossSale = product.GrossSale
+	existingProduct.PriceSale = product.PriceSale
 	existingProduct.PurchaseCost = product.PurchaseCost
 	existingProduct.InitialStock = product.InitialStock
 	existingProduct.FinalStock = product.FinalStock
@@ -332,7 +332,7 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			Name:         row[0],
 			NetProfit:    netProfit,
 			GrossProfit:  grossProfit,
-			GrossSale:    grossSale,
+			PriceSale:    grossSale,
 			PurchaseCost: purchaseCost,
 			InitialStock: initialStock,
 			FinalStock:   finalStock,
@@ -380,7 +380,7 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), product.Name)
 		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), product.NetProfit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.GrossProfit)
-		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), product.GrossSale)
+		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), product.PriceSale)
 		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", row), product.PurchaseCost)
 		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.InitialStock)
 		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), product.FinalStock)

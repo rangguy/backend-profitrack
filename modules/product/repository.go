@@ -11,7 +11,7 @@ type Repository interface {
 	GetProductByIdRepository(productID int) (product Product, err error)
 	UpdateProductRepository(product Product) (err error)
 	DeleteProductRepository(product Product) (err error)
-	BulkCreateProductRepository(products []Product) error // Tambahkan method baru
+	BulkCreateProductRepository(products []Product) error
 	GetCategoryByNameRepository(name string) (category.Category, error)
 }
 

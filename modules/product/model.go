@@ -10,7 +10,7 @@ type Product struct {
 	Name         string            `gorm:"varchar(255);UNIQUE;not null" json:"name"`
 	NetProfit    int               `gorm:"integer;not null" json:"net_profit"`
 	GrossProfit  int               `gorm:"integer;not null" json:"gross_profit"`
-	GrossSale    int               `gorm:"integer;not null" json:"gross_sale"`
+	PriceSale    int               `gorm:"integer;not null" json:"price_sale"`
 	PurchaseCost int               `gorm:"integer;not null" json:"purchase_cost"`
 	InitialStock int               `gorm:"integer" json:"initial_stock"`
 	FinalStock   int               `gorm:"integer" json:"final_stock"`
@@ -25,7 +25,7 @@ type ResponseProduct struct {
 	Name         string `json:"name"`
 	NetProfit    int    `json:"net_profit"`
 	GrossProfit  int    `json:"gross_profit"`
-	GrossSale    int    `json:"gross_sale"`
+	PriceSale    int    `json:"price_sale"`
 	PurchaseCost int    `json:"purchase_cost"`
 	InitialStock int    `json:"initial_stock"`
 	FinalStock   int    `json:"final_stock"`
@@ -37,7 +37,7 @@ type ExcelProduct struct {
 	Name         string `validate:"required"`
 	NetProfit    int    `validate:"required"`
 	GrossProfit  int    `validate:"required"`
-	GrossSale    int    `validate:"required"`
+	PriceSale    int    `validate:"required"`
 	PurchaseCost int    `validate:"required"`
 	InitialStock int    `validate:"required"`
 	FinalStock   int    `validate:"required"`
