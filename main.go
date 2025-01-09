@@ -7,8 +7,8 @@ import (
 	"backend-profitrack/modules/category"
 	"backend-profitrack/modules/criteria"
 	"backend-profitrack/modules/product"
+	"backend-profitrack/modules/score_smart"
 	"backend-profitrack/modules/user"
-	"backend-profitrack/modules/value"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"log"
@@ -30,7 +30,7 @@ func InitiateRouter(db *gorm.DB) {
 	category.Initiator(router, db)
 	product.Initiator(router, db)
 	criteria.Initiator(router, db)
-	value.Initiator(router, db)
+	score_smart.Initiator(router, db)
 
 	err := router.Run(":" + os.Getenv("PORT"))
 	if err != nil {

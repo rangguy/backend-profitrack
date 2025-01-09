@@ -1,4 +1,4 @@
-package value
+package score_smart
 
 import (
 	"backend-profitrack/middleware"
@@ -9,15 +9,15 @@ import (
 )
 
 func Initiator(router *gin.Engine, db *gorm.DB) {
-	repo := NewValueRepository(db)
+	repo := NewScoreSmartRepository(db)
 	productRepo := product.NewProductRepository(db)
 	criteriaRepo := criteria.NewCriteriaRepository(db)
-	service := NewValueService(repo, productRepo, criteriaRepo)
+	service := NewScoreSmartService(repo, productRepo, criteriaRepo)
 
 	api := router.Group("/api")
 	api.Use(middleware.LoggingMiddleware())
 	api.Use(middleware.JWTMiddleware())
-	api.GET("/values", service.GetAllValueService)
-	api.POST("/values", service.CreateValueService)
-	api.DELETE("/values", service.DeleteAllValuesService)
+	api.GET("/values", service.GetAllScoreSmartService)
+	api.POST("/values", service.CreateScoreSmartService)
+	api.DELETE("/values", service.DeleteAllScoreSmartService)
 }

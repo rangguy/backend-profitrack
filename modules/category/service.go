@@ -19,7 +19,6 @@ type Service interface {
 	GetCategoryByIdService(ctx *gin.Context)
 	UpdateCategoryService(ctx *gin.Context)
 	DeleteCategoryService(ctx *gin.Context)
-	//GetBookByCategoryService(ctx *gin.Context)
 }
 
 type categoryService struct {
@@ -82,7 +81,7 @@ func (service *categoryService) CreateCategoryService(ctx *gin.Context) {
 
 	err := service.repository.CreateCategoryRepository(&newCategory)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_categories_name\"") {
+		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint \"uni_categories_name\"") {
 			response := map[string]string{"error": "Nama kategori sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
@@ -168,7 +167,7 @@ func (service *categoryService) UpdateCategoryService(ctx *gin.Context) {
 
 	err = service.repository.UpdateCategoryRepository(existingCategory)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_categories_name\"") {
+		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint \"uni_categories_name\"") {
 			response := map[string]string{"error": "Nama kategori sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return

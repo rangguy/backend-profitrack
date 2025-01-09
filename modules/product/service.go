@@ -50,12 +50,11 @@ func (service *productService) GetAllProductService(ctx *gin.Context) {
 		result = append(result, ResponseProduct{
 			ID:           product.ID,
 			Name:         product.Name,
-			NetProfit:    product.NetProfit,
-			GrossProfit:  product.GrossProfit,
 			PriceSale:    product.PriceSale,
 			PurchaseCost: product.PurchaseCost,
-			InitialStock: product.InitialStock,
-			FinalStock:   product.FinalStock,
+			Profit:       product.Profit,
+			Unit:         product.Unit,
+			Stock:        product.Stock,
 			CategoryID:   product.CategoryID,
 			CategoryName: product.Category.Name,
 		})
@@ -80,12 +79,11 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 	}
 
 	if newProduct.Name == "" ||
-		newProduct.NetProfit == 0 ||
-		newProduct.GrossProfit == 0 ||
 		newProduct.PriceSale == 0 ||
 		newProduct.PurchaseCost == 0 ||
-		newProduct.InitialStock == 0 ||
-		newProduct.FinalStock == 0 ||
+		newProduct.Profit == 0 ||
+		newProduct.Unit == "" ||
+		newProduct.Stock == 0 ||
 		newProduct.CategoryID == 0 {
 		response = map[string]string{"error": "semua field harus diisi dengan nilai yang valid"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
@@ -97,7 +95,7 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 
 	err := service.repository.CreateProductRepository(&newProduct)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_products_name\"") {
+		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint \"uni_products_name\"") {
 			response = map[string]string{"message": "nama produk sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
@@ -148,12 +146,11 @@ func (service *productService) GetProductByIdService(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ResponseProduct{
 		ID:           product.ID,
 		Name:         product.Name,
-		NetProfit:    product.NetProfit,
-		GrossProfit:  product.GrossProfit,
 		PriceSale:    product.PriceSale,
 		PurchaseCost: product.PurchaseCost,
-		InitialStock: product.InitialStock,
-		FinalStock:   product.FinalStock,
+		Profit:       product.Profit,
+		Unit:         product.Unit,
+		Stock:        product.Stock,
 		CategoryID:   product.CategoryID,
 		CategoryName: product.Category.Name,
 	})
@@ -189,37 +186,35 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	}
 
 	if product.Name == "" ||
-		product.NetProfit == 0 ||
-		product.GrossProfit == 0 ||
 		product.PriceSale == 0 ||
 		product.PurchaseCost == 0 ||
-		product.InitialStock == 0 ||
-		product.FinalStock == 0 ||
+		product.Profit == 0 ||
+		product.Unit == "" ||
+		product.Stock == 0 ||
 		product.CategoryID == 0 {
 		response = map[string]string{"error": "semua field harus diisi dengan nilai yang valid"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
-	if existingProduct.Name == product.Name && existingProduct.NetProfit == product.NetProfit && existingProduct.GrossProfit == product.GrossProfit && existingProduct.PriceSale == product.PriceSale && existingProduct.PurchaseCost == product.PurchaseCost && existingProduct.InitialStock == product.InitialStock && existingProduct.FinalStock == product.FinalStock && existingProduct.CategoryID == product.CategoryID {
+	if existingProduct.Name == product.Name && existingProduct.PriceSale == product.PriceSale && existingProduct.PurchaseCost == product.PurchaseCost && existingProduct.Profit == product.Profit && existingProduct.Unit == product.Unit && existingProduct.Stock == product.Stock && existingProduct.CategoryID == product.CategoryID {
 		response = map[string]string{"error": "masukkan minimal satu data yang baru"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
 	existingProduct.Name = product.Name
-	existingProduct.NetProfit = product.NetProfit
-	existingProduct.GrossProfit = product.GrossProfit
 	existingProduct.PriceSale = product.PriceSale
 	existingProduct.PurchaseCost = product.PurchaseCost
-	existingProduct.InitialStock = product.InitialStock
-	existingProduct.FinalStock = product.FinalStock
+	existingProduct.Profit = product.Profit
+	existingProduct.Unit = product.Unit
+	existingProduct.Stock = product.Stock
 	existingProduct.CategoryID = product.CategoryID
 	existingProduct.ModifiedAt = time.Now()
 
 	err = service.repository.UpdateProductRepository(existingProduct)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_products_name\"") {
+		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint \"uni_products_name\"") {
 			response = map[string]string{"message": "nama produk sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
@@ -304,7 +299,7 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 
 	var products []Product
 	for i, row := range rows {
-		if i == 0 { // Skip header
+		if i == 0 {
 			continue
 		}
 
@@ -314,15 +309,13 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 		}
 
 		// Konversi string ke int
-		netProfit, _ := strconv.Atoi(row[1])
-		grossProfit, _ := strconv.Atoi(row[2])
-		grossSale, _ := strconv.Atoi(row[3])
-		purchaseCost, _ := strconv.Atoi(row[4])
-		initialStock, _ := strconv.Atoi(row[5])
-		finalStock, _ := strconv.Atoi(row[6])
+		purchaseCost, _ := strconv.Atoi(row[1])
+		profit, _ := strconv.Atoi(row[2])
+		priceSale, _ := strconv.Atoi(row[3])
+		stock, _ := strconv.Atoi(row[5])
 
 		// Dapatkan category ID berdasarkan nama
-		category, err := service.repository.GetCategoryByNameRepository(row[7])
+		category, err := service.repository.GetCategoryByNameRepository(row[6])
 		if err != nil {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Kategori '%s' tidak ditemukan", row[7])})
 			return
@@ -330,12 +323,11 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 
 		product := Product{
 			Name:         row[0],
-			NetProfit:    netProfit,
-			GrossProfit:  grossProfit,
-			PriceSale:    grossSale,
 			PurchaseCost: purchaseCost,
-			InitialStock: initialStock,
-			FinalStock:   finalStock,
+			PriceSale:    priceSale,
+			Profit:       profit,
+			Unit:         row[4],
+			Stock:        stock,
 			CategoryID:   category.ID,
 			CreatedAt:    time.Now(),
 			ModifiedAt:   time.Now(),
@@ -345,7 +337,7 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 
 	// Bulk insert
 	if err = service.repository.BulkCreateProductRepository(products); err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint") {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": "Beberapa produk sudah ada (duplikat nama produk)"})
 			return
 		}
@@ -368,7 +360,7 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 	defer f.Close()
 
 	// Buat header
-	headers := []string{"Nama Produk", "Net Profit", "Gross Profit", "Gross Sale", "Purchase Cost", "Initial Stock", "Final Stock"}
+	headers := []string{"Nama Produk", "Harga Beli", "Keuntungan", "Harga Jual", "Unit", "Stok", "Kategori"}
 	for i, header := range headers {
 		cell := string(rune('A'+i)) + "1"
 		f.SetCellValue("Sheet1", cell, header)
@@ -378,17 +370,21 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 	for i, product := range products {
 		row := i + 2
 		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), product.Name)
-		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), product.NetProfit)
-		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.GrossProfit)
+		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), product.PurchaseCost)
+		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.Profit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), product.PriceSale)
-		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", row), product.PurchaseCost)
-		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.InitialStock)
-		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), product.FinalStock)
+		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", row), product.Unit)
+		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.Stock)
+		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), product.Category.Name)
 	}
+
+	// Format nama file dengan tanggal
+	currentTime := time.Now()
+	fileName := fmt.Sprintf("data-produk-%s.xlsx", currentTime.Format("02-01-2006"))
 
 	// Set response header
 	ctx.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	ctx.Header("Content-Disposition", "attachment; filename=products.xlsx")
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 
 	if err := f.Write(ctx.Writer); err != nil {
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal membuat file Excel"})
