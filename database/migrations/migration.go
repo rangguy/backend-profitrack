@@ -12,11 +12,11 @@ import (
 
 func Migrations(db *gorm.DB) {
 	var err error
-	//err = db.Migrator().DropTable(product.Product{})
+	//err = db.Migrator().DropTable(score_smart.ScoreSmart{})
 	//if err != nil {
 	//	panic(err)
 	//}
-	err = db.AutoMigrate(&user.User{}, &category.Category{}, &product.Product{}, &criteria.Criteria{}, &score_smart.Value{})
+	err = db.AutoMigrate(&user.User{}, &category.Category{}, &product.Product{}, &criteria.Criteria{}, &score_smart.ScoreSmart{})
 	if err != nil {
 		panic(err)
 	}
