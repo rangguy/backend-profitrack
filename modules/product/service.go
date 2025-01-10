@@ -91,11 +91,11 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 	}
 
 	newProduct.CreatedAt = time.Now()
-	newProduct.ModifiedAt = time.Now()
+	newProduct.UpdatedAt = time.Now()
 
 	err := service.repository.CreateProductRepository(&newProduct)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint \"uni_products_name\"") {
+		if strings.Contains(err.Error(), "duplicate key score violates unique constraint \"uni_products_name\"") {
 			response = map[string]string{"message": "nama produk sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
@@ -210,11 +210,11 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	existingProduct.Unit = product.Unit
 	existingProduct.Stock = product.Stock
 	existingProduct.CategoryID = product.CategoryID
-	existingProduct.ModifiedAt = time.Now()
+	existingProduct.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateProductRepository(existingProduct)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint \"uni_products_name\"") {
+		if strings.Contains(err.Error(), "duplicate key score violates unique constraint \"uni_products_name\"") {
 			response = map[string]string{"message": "nama produk sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
@@ -330,14 +330,14 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			Stock:        stock,
 			CategoryID:   category.ID,
 			CreatedAt:    time.Now(),
-			ModifiedAt:   time.Now(),
+			UpdatedAt:    time.Now(),
 		}
 		products = append(products, product)
 	}
 
 	// Bulk insert
 	if err = service.repository.BulkCreateProductRepository(products); err != nil {
-		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint") {
+		if strings.Contains(err.Error(), "duplicate key score violates unique constraint") {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": "Beberapa produk sudah ada (duplikat nama produk)"})
 			return
 		}

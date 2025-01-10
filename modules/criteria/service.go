@@ -70,11 +70,11 @@ func (service *criteriaService) CreateCriteriaService(ctx *gin.Context) {
 	}
 
 	newCriteria.CreatedAt = time.Now()
-	newCriteria.ModifiedAt = time.Now()
+	newCriteria.UpdatedAt = time.Now()
 
 	err := service.repository.CreateCriteriaRepository(&newCriteria)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key score_smart violates unique constraint \"uni_criteria_name\"") {
+		if strings.Contains(err.Error(), "duplicate key score violates unique constraint \"uni_criteria_name\"") {
 			response := map[string]string{"error": "Nama kriteria sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
@@ -157,7 +157,7 @@ func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
 
 	existingCriteria.Weight = criteria.Weight
 	existingCriteria.Type = criteria.Type
-	existingCriteria.ModifiedAt = time.Now()
+	existingCriteria.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateCriteriaRepository(existingCriteria)
 	if err != nil {

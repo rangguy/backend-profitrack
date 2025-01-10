@@ -1,4 +1,4 @@
-package score_smart
+package score
 
 import (
 	"backend-profitrack/helpers"
@@ -11,36 +11,36 @@ import (
 )
 
 type Service interface {
-	CreateScoreSmartService(ctx *gin.Context)
-	GetAllScoreSmartService(ctx *gin.Context)
-	NormalizeScoreSmartService(ctx *gin.Context)
-	DeleteAllScoreSmartService(ctx *gin.Context)
+	CreateScoreService(ctx *gin.Context)
+	GetAllScoreService(ctx *gin.Context)
+	NormalizeScoreService(ctx *gin.Context)
+	DeleteAllScoreService(ctx *gin.Context)
 }
 
-type ScoreSmartService struct {
+type scoreService struct {
 	repository         Repository
 	productRepository  product.Repository
 	criteriaRepository criteria.Repository
 }
 
-func NewScoreSmartService(repo Repository, productRepo product.Repository, criteriaRepo criteria.Repository) Service {
-	return &ScoreSmartService{
+func NewScoreService(repo Repository, productRepo product.Repository, criteriaRepo criteria.Repository) Service {
+	return &scoreService{
 		repository:         repo,
 		productRepository:  productRepo,
 		criteriaRepository: criteriaRepo,
 	}
 }
 
-func (service *ScoreSmartService) GetAllScoreSmartService(ctx *gin.Context) {
-	values, err := service.repository.GetAllScoreSmartRepository()
+func (service *scoreService) GetAllScoreService(ctx *gin.Context) {
+	values, err := service.repository.GetAllScoreRepository()
 	if err != nil {
 		helpers.ResponseJSON(ctx, http.StatusNotFound, err.Error())
 		return
 	}
 
-	var result []ScoreSmart
+	var result []Score
 	for _, value := range values {
-		result = append(result, ScoreSmart{
+		result = append(result, Score{
 			ID:         value.ID,
 			Score:      value.Score,
 			ProductID:  value.ProductID,
@@ -57,7 +57,7 @@ func (service *ScoreSmartService) GetAllScoreSmartService(ctx *gin.Context) {
 	}
 }
 
-func (service *ScoreSmartService) CreateScoreSmartService(ctx *gin.Context) {
+func (service *scoreService) CreateScoreService(ctx *gin.Context) {
 	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
 	if err != nil {
 		response := map[string]string{"error": "gagal mengambil data kriteria"}
@@ -98,15 +98,15 @@ func (service *ScoreSmartService) CreateScoreSmartService(ctx *gin.Context) {
 				return
 			}
 
-			newScoreSmart := ScoreSmart{
+			newScore := Score{
 				ProductID:  produk.ID,
 				CriteriaID: kriteria.ID,
 				Score:      nilai,
 				CreatedAt:  time.Now(),
-				ModifiedAt: time.Now(),
+				UpdatedAt:  time.Now(),
 			}
 
-			err = service.repository.CreateScoreSmartRepository(&newScoreSmart)
+			err = service.repository.CreateScoreRepository(&newScore)
 			if err != nil {
 				response := map[string]string{"error": "gagal menyimpan data nilai untuk produk " + produk.Name}
 				helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
@@ -119,12 +119,12 @@ func (service *ScoreSmartService) CreateScoreSmartService(ctx *gin.Context) {
 	helpers.ResponseJSON(ctx, http.StatusCreated, response)
 }
 
-func (service *ScoreSmartService) NormalizeScoreSmartService(ctx *gin.Context) {
+func (service *scoreService) NormalizeScoreService(ctx *gin.Context) {
 
 }
 
-func (service *ScoreSmartService) DeleteAllScoreSmartService(ctx *gin.Context) {
-	err := service.repository.DeleteAllScoreSmartsRepository()
+func (service *scoreService) DeleteAllScoreService(ctx *gin.Context) {
+	err := service.repository.DeleteAllScoresRepository()
 	if err != nil {
 		response := map[string]string{"error": "gagal menghapus semua data nilai"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)

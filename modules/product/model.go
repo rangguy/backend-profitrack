@@ -16,7 +16,7 @@ type Product struct {
 	CategoryID   int               `gorm:"integer" json:"category_id"`
 	Category     category.Category `gorm:"foreignkey:CategoryID" json:"category"`
 	CreatedAt    time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	ModifiedAt   time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"modified_at"`
+	UpdatedAt    time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 type ResponseProduct struct {

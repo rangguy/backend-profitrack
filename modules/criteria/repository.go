@@ -6,10 +6,10 @@ import (
 
 type Repository interface {
 	GetAllCriteriaRepository() (result []Criteria, err error)
-	CreateCriteriaRepository(category *Criteria) (err error)
-	GetCriteriaByIdRepository(categoryID int) (category Criteria, err error)
-	UpdateCriteriaRepository(category Criteria) (err error)
-	DeleteCriteriaRepository(category Criteria) (err error)
+	CreateCriteriaRepository(criteria *Criteria) (err error)
+	GetCriteriaByIdRepository(criteriaID int) (criteria Criteria, err error)
+	UpdateCriteriaRepository(criteria Criteria) (err error)
+	DeleteCriteriaRepository(criteria Criteria) (err error)
 }
 
 type criteriaRepository struct {

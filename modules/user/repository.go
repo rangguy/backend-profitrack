@@ -26,10 +26,10 @@ func NewUserRepository(db *gorm.DB) Repository {
 			log.Fatal("failed to hash password: ", err)
 		}
 		adminUser := User{
-			Username:   "admin",
-			Password:   string(password),
-			CreatedAt:  time.Now(),
-			ModifiedAt: time.Now(),
+			Username:  "admin",
+			Password:  string(password),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 		db.Create(&adminUser)
 		log.Println("Admin user created.")
