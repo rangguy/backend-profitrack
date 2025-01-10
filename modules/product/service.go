@@ -55,6 +55,7 @@ func (service *productService) GetAllProductService(ctx *gin.Context) {
 			Profit:       product.Profit,
 			Unit:         product.Unit,
 			Stock:        product.Stock,
+			Sold:         product.Sold,
 			CategoryID:   product.CategoryID,
 			CategoryName: product.Category.Name,
 		})
@@ -79,17 +80,18 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 	}
 
 	if newProduct.Name == "" ||
-		newProduct.PriceSale == 0 ||
 		newProduct.PurchaseCost == 0 ||
-		newProduct.Profit == 0 ||
+		newProduct.PriceSale == 0 ||
 		newProduct.Unit == "" ||
 		newProduct.Stock == 0 ||
+		newProduct.Sold == 0 ||
 		newProduct.CategoryID == 0 {
 		response = map[string]string{"error": "semua field harus diisi dengan nilai yang valid"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
+	newProduct.Profit = newProduct.PriceSale - newProduct.PurchaseCost
 	newProduct.CreatedAt = time.Now()
 	newProduct.UpdatedAt = time.Now()
 
@@ -146,11 +148,12 @@ func (service *productService) GetProductByIdService(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ResponseProduct{
 		ID:           product.ID,
 		Name:         product.Name,
-		PriceSale:    product.PriceSale,
 		PurchaseCost: product.PurchaseCost,
+		PriceSale:    product.PriceSale,
 		Profit:       product.Profit,
 		Unit:         product.Unit,
 		Stock:        product.Stock,
+		Sold:         product.Sold,
 		CategoryID:   product.CategoryID,
 		CategoryName: product.Category.Name,
 	})
@@ -188,9 +191,9 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	if product.Name == "" ||
 		product.PriceSale == 0 ||
 		product.PurchaseCost == 0 ||
-		product.Profit == 0 ||
 		product.Unit == "" ||
 		product.Stock == 0 ||
+		product.Sold == 0 ||
 		product.CategoryID == 0 {
 		response = map[string]string{"error": "semua field harus diisi dengan nilai yang valid"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
@@ -206,9 +209,10 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	existingProduct.Name = product.Name
 	existingProduct.PriceSale = product.PriceSale
 	existingProduct.PurchaseCost = product.PurchaseCost
-	existingProduct.Profit = product.Profit
+	existingProduct.Profit = product.PriceSale - product.PurchaseCost
 	existingProduct.Unit = product.Unit
 	existingProduct.Stock = product.Stock
+	existingProduct.Sold = product.Sold
 	existingProduct.CategoryID = product.CategoryID
 	existingProduct.UpdatedAt = time.Now()
 
@@ -313,9 +317,10 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 		profit, _ := strconv.Atoi(row[2])
 		priceSale, _ := strconv.Atoi(row[3])
 		stock, _ := strconv.Atoi(row[5])
+		sold, _ := strconv.Atoi(row[6])
 
 		// Dapatkan category ID berdasarkan nama
-		category, err := service.repository.GetCategoryByNameRepository(row[6])
+		category, err := service.repository.GetCategoryByNameRepository(row[7])
 		if err != nil {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Kategori '%s' tidak ditemukan", row[7])})
 			return
@@ -328,6 +333,7 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			Profit:       profit,
 			Unit:         row[4],
 			Stock:        stock,
+			Sold:         sold,
 			CategoryID:   category.ID,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
@@ -375,6 +381,7 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), product.PriceSale)
 		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", row), product.Unit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.Stock)
+		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.Sold)
 		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), product.Category.Name)
 	}
 
