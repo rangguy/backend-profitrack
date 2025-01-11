@@ -17,7 +17,8 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	api := router.Group("/api")
 	api.Use(middleware.LoggingMiddleware())
 	api.Use(middleware.JWTMiddleware())
-	api.GET("/values", service.GetAllScoreService)
-	api.POST("/values", service.CreateScoreService)
-	api.DELETE("/values", service.DeleteAllScoreService)
+	api.GET("/scores/:methodID", service.GetAllScoreByMethodIDService)
+	api.POST("/scores/:methodID", service.CreateScoreByMethodIDService)
+	api.PUT("scores/:methodID", service.NormalizeScoreByMethodIDService, service.UtilityScoreByMethodIDService, service.FinalScoreByMethodIDService)
+	api.DELETE("/scores", service.DeleteAllScoreService)
 }

@@ -26,7 +26,7 @@ type ResponseProduct struct {
 	PurchaseCost int    `json:"purchase_cost"`
 	PriceSale    int    `json:"price_sale"`
 	Profit       int    `json:"profit"`
-	Unit         string `gorm:"varchar(255)" json:"unit"`
+	Unit         string `json:"unit"`
 	Stock        int    `json:"stock"`
 	Sold         int    `json:"sold"`
 	CategoryID   int    `json:"category_id"`

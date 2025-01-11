@@ -307,31 +307,82 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			continue
 		}
 
-		if len(row) < 8 { // Validasi jumlah kolom
+		if len(row) < 7 {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Format tidak valid pada baris %d", i+1)})
 			return
 		}
 
-		// Konversi string ke int
-		purchaseCost, _ := strconv.Atoi(row[1])
-		profit, _ := strconv.Atoi(row[2])
-		priceSale, _ := strconv.Atoi(row[3])
-		stock, _ := strconv.Atoi(row[5])
-		sold, _ := strconv.Atoi(row[6])
+		// Fungsi helper untuk membersihkan string angka
+		cleanNumber := func(str string) string {
+			// Hapus titik dan koma
+			str = strings.ReplaceAll(str, ".", "")
+			str = strings.ReplaceAll(str, ",", "")
+			// Hapus spasi jika ada
+			str = strings.ReplaceAll(str, " ", "")
+			return str
+		}
 
-		// Dapatkan category ID berdasarkan nama
-		category, err := service.repository.GetCategoryByNameRepository(row[7])
+		// Bersihkan string angka
+		cleanPurchaseCost := cleanNumber(row[1])
+		cleanPriceSale := cleanNumber(row[2])
+		cleanStock := cleanNumber(row[4])
+		cleanSold := cleanNumber(row[5])
+
+		// Konversi string ke int dengan error handling
+		purchaseCost, err := strconv.Atoi(cleanPurchaseCost)
 		if err != nil {
-			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Kategori '%s' tidak ditemukan", row[7])})
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Format harga beli tidak valid pada baris %d: %s", i+1, row[1]),
+			})
+			return
+		}
+
+		priceSale, err := strconv.Atoi(cleanPriceSale)
+		if err != nil {
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Format harga jual tidak valid pada baris %d: %s", i+1, row[2]),
+			})
+			return
+		}
+
+		stock, err := strconv.Atoi(cleanStock)
+		if err != nil {
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Format stok tidak valid pada baris %d: %s", i+1, row[4]),
+			})
+			return
+		}
+
+		sold, err := strconv.Atoi(cleanSold)
+		if err != nil {
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Format stok terjual tidak valid pada baris %d: %s", i+1, row[5]),
+			})
+			return
+		}
+
+		// Validasi angka negatif
+		if purchaseCost < 0 || priceSale < 0 || stock < 0 || sold < 0 {
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Nilai tidak boleh negatif pada baris %d", i+1),
+			})
+			return
+		}
+
+		category, err := service.repository.GetCategoryByNameRepository(row[66])
+		if err != nil {
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Kategori '%s' tidak ditemukan", row[66]),
+			})
 			return
 		}
 
 		product := Product{
-			Name:         row[0],
+			Name:         strings.TrimSpace(row[0]),
 			PurchaseCost: purchaseCost,
 			PriceSale:    priceSale,
-			Profit:       profit,
-			Unit:         row[4],
+			Profit:       priceSale - purchaseCost,
+			Unit:         strings.TrimSpace(row[4]),
 			Stock:        stock,
 			Sold:         sold,
 			CategoryID:   category.ID,
@@ -366,7 +417,7 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 	defer f.Close()
 
 	// Buat header
-	headers := []string{"Nama Produk", "Harga Beli", "Keuntungan", "Harga Jual", "Unit", "Stok", "Kategori"}
+	headers := []string{"Nama Produk", "Harga Beli", "Harga Jual", "Keuntungan", "Satuan", "Stok", "Stok terjual", "Kategori"}
 	for i, header := range headers {
 		cell := string(rune('A'+i)) + "1"
 		f.SetCellValue("Sheet1", cell, header)
@@ -377,8 +428,8 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 		row := i + 2
 		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), product.Name)
 		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), product.PurchaseCost)
-		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.Profit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), product.PriceSale)
+		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.Profit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", row), product.Unit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.Stock)
 		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.Sold)

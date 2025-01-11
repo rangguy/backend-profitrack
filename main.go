@@ -6,6 +6,7 @@ import (
 	"backend-profitrack/middleware"
 	"backend-profitrack/modules/category"
 	"backend-profitrack/modules/criteria"
+	"backend-profitrack/modules/final_score"
 	"backend-profitrack/modules/method"
 	"backend-profitrack/modules/product"
 	"backend-profitrack/modules/score"
@@ -33,6 +34,7 @@ func InitiateRouter(db *gorm.DB) {
 	criteria.Initiator(router, db)
 	method.Initiator(router, db)
 	score.Initiator(router, db)
+	final_score.Initiator(router, db)
 
 	err := router.Run(":" + os.Getenv("PORT"))
 	if err != nil {
