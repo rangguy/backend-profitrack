@@ -116,7 +116,7 @@ func (service *criteriaService) GetCriteriaByIdService(ctx *gin.Context) {
 }
 
 func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
-	var criteria Criteria
+	var criteriaUpdate Criteria
 
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -125,7 +125,7 @@ func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
 		return
 	}
 
-	if err = ctx.ShouldBindJSON(&criteria); err != nil {
+	if err = ctx.ShouldBindJSON(&criteriaUpdate); err != nil {
 		response := map[string]string{"error": "failed to read json"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
@@ -143,20 +143,32 @@ func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
 		return
 	}
 
-	if criteria.Weight == 0 || criteria.Type == "" {
-		response := map[string]string{"error": "inputan tidak valid"}
+	// Track if any changes were made
+	hasChanges := false
+
+	// Update weight if provided and different
+	if criteriaUpdate.Weight != 0 {
+		if criteriaUpdate.Weight != existingCriteria.Weight {
+			existingCriteria.Weight = criteriaUpdate.Weight
+			hasChanges = true
+		}
+	}
+
+	// Update type if provided and different
+	if criteriaUpdate.Type != "" {
+		if criteriaUpdate.Type != existingCriteria.Type {
+			existingCriteria.Type = criteriaUpdate.Type
+			hasChanges = true
+		}
+	}
+
+	// Check if any changes were made
+	if !hasChanges {
+		response := map[string]string{"error": "Tidak ada perubahan data"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
-	if existingCriteria.Weight == criteria.Weight && existingCriteria.Type == criteria.Type {
-		response := map[string]string{"error": "Masukkan setidaknya satu data baru"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	existingCriteria.Weight = criteria.Weight
-	existingCriteria.Type = criteria.Type
 	existingCriteria.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateCriteriaRepository(existingCriteria)

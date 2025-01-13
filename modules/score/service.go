@@ -19,10 +19,8 @@ type Service interface {
 	CreateScoreByMethodIDService(ctx *gin.Context)
 	GetAllScoresByMethodIDService(ctx *gin.Context)
 	UtilityScoreSMARTService(ctx *gin.Context)
-	FinalScoreSMARTService(ctx *gin.Context)
+	ScoreOneTimesWeightByMethodIDService(ctx *gin.Context)
 	NormalizeScoreMOORAService(ctx *gin.Context)
-	ScoreTimesWeightMOORAService(ctx *gin.Context)
-	FinalScoreMOORAService(ctx *gin.Context)
 	DeleteAllScoresSMARTService(ctx *gin.Context)
 	DeleteAllScoresMOORAService(ctx *gin.Context)
 }
@@ -240,7 +238,7 @@ func (service *scoreService) UtilityScoreSMARTService(ctx *gin.Context) {
 		}
 	}
 
-	response := map[string]string{"message": "Perhitungan utility score berhasil"}
+	response := map[string]string{"message": "Perhitungan utility nilai SMART berhasil"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
@@ -307,15 +305,11 @@ func (service *scoreService) NormalizeScoreMOORAService(ctx *gin.Context) {
 		}
 	}
 
-	response := map[string]string{"message": "Normalisasi score berhasil"}
+	response := map[string]string{"message": "Normalisasi nilai MOORA berhasil"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
-func (service *scoreService) ScoreTimesWeightMOORAService(ctx *gin.Context) {
-
-}
-
-func (service *scoreService) FinalScoreSMARTService(ctx *gin.Context) {
+func (service *scoreService) ScoreOneTimesWeightByMethodIDService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}
@@ -380,12 +374,8 @@ func (service *scoreService) FinalScoreSMARTService(ctx *gin.Context) {
 		}
 	}
 
-	response := map[string]string{"message": "Perhitungan final score berhasil"}
+	response := map[string]string{"message": "Perhitungan score one x bobot berhasil"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
-}
-
-func (service *scoreService) FinalScoreMOORAService(ctx *gin.Context) {
-
 }
 
 func (service *scoreService) DeleteAllScoresSMARTService(ctx *gin.Context) {
@@ -442,5 +432,87 @@ func (service *scoreService) DeleteAllScoresSMARTService(ctx *gin.Context) {
 }
 
 func (service *scoreService) DeleteAllScoresMOORAService(ctx *gin.Context) {
+	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+	if err != nil {
+		response := map[string]string{"error": "ID tidak sesuai"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
 
+	// Ambil semua score untuk method ini
+	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "gagal mengambil data score"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	// Ambil semua kriteria untuk mendapatkan tipe kriteria (benefit/cost)
+	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
+	if err != nil {
+		response := map[string]string{"error": "gagal mengambil data kriteria"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	// Buat map untuk menyimpan tipe kriteria
+	criteriaTypes := make(map[int]string)
+	for _, criteria := range criteriaList {
+		criteriaTypes[criteria.ID] = criteria.Type
+	}
+
+	// Kelompokkan score berdasarkan produk
+	type productScore struct {
+		benefitSum float64
+		costSum    float64
+	}
+	productScores := make(map[int]*productScore)
+
+	// Hitung jumlah benefit dan cost berdasarkan ScoreTwo
+	for _, score := range scores {
+		if _, exists := productScores[score.ProductID]; !exists {
+			productScores[score.ProductID] = &productScore{0, 0}
+		}
+
+		// ScoreTwo sudah merupakan weighted normalized value
+		if strings.EqualFold(criteriaTypes[score.CriteriaID], "benefit") {
+			productScores[score.ProductID].benefitSum += score.ScoreTwo
+		} else if strings.EqualFold(criteriaTypes[score.CriteriaID], "cost") {
+			productScores[score.ProductID].costSum += score.ScoreTwo
+		}
+	}
+
+	// Hitung nilai Yi untuk setiap produk
+	for productID, score := range productScores {
+		fmt.Printf("Product ID: %d, Total Benefit: %f, Total Cost: %f\n", productID, score.benefitSum, score.costSum)
+
+		// Hitung Yi = (sum of benefit criteria) - (sum of cost criteria)
+		yi := score.benefitSum - score.costSum
+
+		finalScore := &final_score.FinalScore{
+			ProductID:  productID,
+			MethodID:   methodID,
+			FinalScore: yi,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
+		}
+
+		err = service.repository.CreateFinalScoreByMethodIDRepository(methodID, finalScore)
+		if err != nil {
+			response := map[string]string{"error": "gagal menyimpan final score"}
+			helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+			return
+		}
+	}
+
+	//Setelah menyimpan semua final score, baru hapus data score
+	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "gagal menghapus semua data nilai"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]string{"message": "perhitungan final score dan penghapusan data nilai berhasil"}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }

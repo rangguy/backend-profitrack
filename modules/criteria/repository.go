@@ -23,7 +23,7 @@ func NewCriteriaRepository(db *gorm.DB) Repository {
 }
 
 func (r *criteriaRepository) GetAllCriteriaRepository() (result []Criteria, err error) {
-	err = r.DB.Find(&result).Error
+	err = r.DB.Order("id ASC").Find(&result).Error
 	return result, err
 }
 
