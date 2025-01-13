@@ -304,31 +304,32 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 	var products []Product
 	for i, row := range rows {
 		if i == 0 {
-			continue
+			continue // Skip header row
 		}
 
+		// Periksa jumlah kolom yang dibutuhkan (7 kolom sesuai format)
 		if len(row) < 7 {
-			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Format tidak valid pada baris %d", i+1)})
+			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Format tidak valid pada baris %d: jumlah kolom kurang dari 7", i+1),
+			})
 			return
 		}
 
 		// Fungsi helper untuk membersihkan string angka
 		cleanNumber := func(str string) string {
-			// Hapus titik dan koma
 			str = strings.ReplaceAll(str, ".", "")
 			str = strings.ReplaceAll(str, ",", "")
-			// Hapus spasi jika ada
 			str = strings.ReplaceAll(str, " ", "")
 			return str
 		}
 
-		// Bersihkan string angka
-		cleanPurchaseCost := cleanNumber(row[1])
-		cleanPriceSale := cleanNumber(row[2])
-		cleanStock := cleanNumber(row[4])
-		cleanSold := cleanNumber(row[5])
+		// Bersihkan dan konversi data numerik
+		cleanPurchaseCost := cleanNumber(row[1]) // harga beli di kolom 2
+		cleanPriceSale := cleanNumber(row[2])    // harga jual di kolom 3
+		cleanStock := cleanNumber(row[4])        // stok di kolom 5
+		cleanSold := cleanNumber(row[5])         // stok terjual di kolom 6
 
-		// Konversi string ke int dengan error handling
+		// Konversi ke integer dengan validasi
 		purchaseCost, err := strconv.Atoi(cleanPurchaseCost)
 		if err != nil {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
@@ -369,10 +370,11 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			return
 		}
 
-		category, err := service.repository.GetCategoryByNameRepository(row[66])
+		// Get category using the last column (index 6)
+		category, err := service.repository.GetCategoryByNameRepository(row[6])
 		if err != nil {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("Kategori '%s' tidak ditemukan", row[66]),
+				"error": fmt.Sprintf("Kategori '%s' tidak ditemukan", row[6]),
 			})
 			return
 		}
@@ -382,7 +384,7 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			PurchaseCost: purchaseCost,
 			PriceSale:    priceSale,
 			Profit:       priceSale - purchaseCost,
-			Unit:         strings.TrimSpace(row[4]),
+			Unit:         strings.TrimSpace(row[3]), // satuan di kolom 4
 			Stock:        stock,
 			Sold:         sold,
 			CategoryID:   category.ID,
@@ -432,8 +434,8 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.Profit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", row), product.Unit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.Stock)
-		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.Sold)
-		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), product.Category.Name)
+		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), product.Sold)
+		f.SetCellValue("Sheet1", fmt.Sprintf("H%d", row), product.Category.Name)
 	}
 
 	// Format nama file dengan tanggal

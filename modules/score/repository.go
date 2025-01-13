@@ -1,6 +1,7 @@
 package score
 
 import (
+	"backend-profitrack/modules/final_score"
 	"gorm.io/gorm"
 )
 
@@ -8,7 +9,8 @@ type Repository interface {
 	GetAllScoreByMethodIDRepository(methodID int) (result []Score, err error)
 	CreateScoreByMethodIDRepository(methodID int, score *Score) (err error)
 	UpdateScoreByMethodIDRepository(methodID int, score *Score) (err error)
-	DeleteAllScoresRepository() (err error)
+	CreateFinalScoreByMethodIDRepository(methodID int, finalScore *final_score.FinalScore) (err error)
+	DeleteAllScoresByMethodIDRepository(methodID int) (err error)
 }
 
 type scoreRepository struct {
@@ -38,7 +40,12 @@ func (r *scoreRepository) UpdateScoreByMethodIDRepository(methodID int, score *S
 	return err
 }
 
-func (r *scoreRepository) DeleteAllScoresRepository() (err error) {
-	err = r.DB.Where("1 = 1").Delete(&Score{}).Error
+func (r *scoreRepository) CreateFinalScoreByMethodIDRepository(methodID int, finalScore *final_score.FinalScore) (err error) {
+	err = r.DB.Where("method_id = ?", methodID).Create(&finalScore).Error
+	return err
+}
+
+func (r *scoreRepository) DeleteAllScoresByMethodIDRepository(methodID int) (err error) {
+	err = r.DB.Where("method_id = ?", methodID).Delete(&Score{}).Error
 	return err
 }

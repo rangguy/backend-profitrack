@@ -3,8 +3,12 @@ package score
 import (
 	"backend-profitrack/helpers"
 	"backend-profitrack/modules/criteria"
+	"backend-profitrack/modules/final_score"
+	"backend-profitrack/modules/method"
 	"backend-profitrack/modules/product"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,63 +17,29 @@ import (
 
 type Service interface {
 	CreateScoreByMethodIDService(ctx *gin.Context)
-	GetAllScoreByMethodIDService(ctx *gin.Context)
-	NormalizeScoreByMethodIDService(ctx *gin.Context)
-	UtilityScoreByMethodIDService(ctx *gin.Context)
-	FinalScoreByMethodIDService(ctx *gin.Context)
-	DeleteAllScoreService(ctx *gin.Context)
+	GetAllScoresByMethodIDService(ctx *gin.Context)
+	UtilityScoreSMARTService(ctx *gin.Context)
+	FinalScoreSMARTService(ctx *gin.Context)
+	NormalizeScoreMOORAService(ctx *gin.Context)
+	ScoreTimesWeightMOORAService(ctx *gin.Context)
+	FinalScoreMOORAService(ctx *gin.Context)
+	DeleteAllScoresSMARTService(ctx *gin.Context)
+	DeleteAllScoresMOORAService(ctx *gin.Context)
 }
 
 type scoreService struct {
 	repository         Repository
 	productRepository  product.Repository
 	criteriaRepository criteria.Repository
+	methodRepository   method.Repository
 }
 
-func NewScoreService(repo Repository, productRepo product.Repository, criteriaRepo criteria.Repository) Service {
+func NewScoreService(repo Repository, productRepo product.Repository, criteriaRepo criteria.Repository, methodRepo method.Repository) Service {
 	return &scoreService{
 		repository:         repo,
 		productRepository:  productRepo,
 		criteriaRepository: criteriaRepo,
-	}
-}
-
-func (service *scoreService) GetAllScoreByMethodIDService(ctx *gin.Context) {
-	methodID, err := strconv.Atoi(ctx.Param("methodID"))
-	if err != nil {
-		response := map[string]string{"error": "ID tidak sesuai"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	values, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
-	if err != nil {
-		helpers.ResponseJSON(ctx, http.StatusNotFound, err.Error())
-		return
-	}
-
-	var result []Score
-	for _, value := range values {
-		result = append(result, Score{
-			ID:             value.ID,
-			Score:          value.Score,
-			NormalizeScore: value.NormalizeScore,
-			ScoreOne:       value.ScoreOne,
-			ScoreTwo:       value.ScoreTwo,
-			ProductID:      value.ProductID,
-			CriteriaID:     value.CriteriaID,
-			MethodID:       value.MethodID,
-			CreatedAt:      value.CreatedAt,
-			UpdatedAt:      value.UpdatedAt,
-		})
-	}
-
-	if result == nil {
-		response := map[string]string{"message": "data nilai masih kosong"}
-		helpers.ResponseJSON(ctx, http.StatusOK, response)
-		return
-	} else {
-		helpers.ResponseJSON(ctx, http.StatusOK, result)
+		methodRepository:   methodRepo,
 	}
 }
 
@@ -109,7 +79,7 @@ func (service *scoreService) CreateScoreByMethodIDService(ctx *gin.Context) {
 				if produk.PurchaseCost != 0 {
 					nilai = (profit * sold) / (purchaseCost * stock)
 				}
-			case strings.ToLower("Profit Margin"):
+			case strings.ToLower("Net Profit Margin"):
 				if produk.PriceSale != 0 {
 					nilai = (profit * sold) / (priceSale * sold)
 				}
@@ -145,7 +115,7 @@ func (service *scoreService) CreateScoreByMethodIDService(ctx *gin.Context) {
 	helpers.ResponseJSON(ctx, http.StatusCreated, response)
 }
 
-func (service *scoreService) NormalizeScoreByMethodIDService(ctx *gin.Context) {
+func (service *scoreService) GetAllScoresByMethodIDService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}
@@ -153,71 +123,44 @@ func (service *scoreService) NormalizeScoreByMethodIDService(ctx *gin.Context) {
 		return
 	}
 
-	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
+	values, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
 	if err != nil {
-		response := map[string]string{"error": "gagal mengambil data kriteria"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		helpers.ResponseJSON(ctx, http.StatusNotFound, err.Error())
 		return
 	}
 
-	// Ambil semua score untuk method ini
-	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
-	if err != nil {
-		response := map[string]string{"error": "gagal mengambil data score"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+	var result []Score
+	for _, value := range values {
+		result = append(result, Score{
+			ID:         value.ID,
+			Score:      value.Score,
+			ScoreOne:   value.ScoreOne,
+			ScoreTwo:   value.ScoreTwo,
+			ProductID:  value.ProductID,
+			CriteriaID: value.CriteriaID,
+			MethodID:   value.MethodID,
+			CreatedAt:  value.CreatedAt,
+			UpdatedAt:  value.UpdatedAt,
+		})
+	}
+
+	if len(result) == 0 {
+		// Ambil data method untuk mendapatkan namanya
+		method, err := service.methodRepository.GetMethodByIdRepository(methodID)
+		if err != nil {
+			response := map[string]string{"error": "Metode tidak ditemukan"}
+			helpers.ResponseJSON(ctx, http.StatusNotFound, response)
+			return
+		}
+		response := map[string]string{"message": fmt.Sprintf("data nilai dengan metode %s masih kosong", method.Name)}
+		helpers.ResponseJSON(ctx, http.StatusOK, response)
 		return
 	}
 
-	// Kelompokkan score berdasarkan criteria
-	scoreByCriteria := make(map[int][]float64)
-	for _, score := range scores {
-		scoreByCriteria[score.CriteriaID] = append(scoreByCriteria[score.CriteriaID], score.Score)
-	}
-
-	// Lakukan normalisasi untuk setiap kriteria
-	for _, criteria := range criteriaList {
-		scoreValues := scoreByCriteria[criteria.ID]
-		if len(scoreValues) == 0 {
-			continue
-		}
-
-		// Cari nilai min dan max
-		minScore := scoreValues[0]
-		maxScore := scoreValues[0]
-		for _, value := range scoreValues {
-			if value < minScore {
-				minScore = value
-			}
-			if value > maxScore {
-				maxScore = value
-			}
-		}
-
-		// Normalisasi setiap score untuk kriteria ini
-		for _, score := range scores {
-			if score.CriteriaID == criteria.ID {
-				normalizedValue := 0.0
-				if maxScore != minScore {
-					normalizedValue = (score.Score - minScore) / (maxScore - minScore)
-				}
-
-				// Update score dengan nilai yang sudah dinormalisasi
-				score.NormalizeScore = normalizedValue
-				err = service.repository.UpdateScoreByMethodIDRepository(methodID, &score)
-				if err != nil {
-					response := map[string]string{"error": "gagal update score"}
-					helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-					return
-				}
-			}
-		}
-	}
-
-	response := map[string]string{"message": "Normalisasi score berhasil"}
-	helpers.ResponseJSON(ctx, http.StatusOK, response)
+	helpers.ResponseJSON(ctx, http.StatusOK, result)
 }
 
-func (service *scoreService) UtilityScoreByMethodIDService(ctx *gin.Context) {
+func (service *scoreService) UtilityScoreSMARTService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}
@@ -248,22 +191,22 @@ func (service *scoreService) UtilityScoreByMethodIDService(ctx *gin.Context) {
 	}
 
 	// Step 4: Group normalized scores by criteria
-	normalizedScoreByCriteria := make(map[int][]float64)
+	scoreByCriteria := make(map[int][]float64)
 	for _, score := range scores {
-		normalizedScoreByCriteria[score.CriteriaID] = append(normalizedScoreByCriteria[score.CriteriaID], score.NormalizeScore)
+		scoreByCriteria[score.CriteriaID] = append(scoreByCriteria[score.CriteriaID], score.Score)
 	}
 
 	// Step 5: Calculate ScoreOne based on normalized scores
 	for _, criteria := range criteriaList {
-		normalizedValues := normalizedScoreByCriteria[criteria.ID]
-		if len(normalizedValues) == 0 {
+		scoreValues := scoreByCriteria[criteria.ID]
+		if len(scoreValues) == 0 {
 			continue
 		}
 
 		// Find min and max from normalized scores
-		minNorm := normalizedValues[0]
-		maxNorm := normalizedValues[0]
-		for _, value := range normalizedValues {
+		minNorm := scoreValues[0]
+		maxNorm := scoreValues[0]
+		for _, value := range scoreValues {
 			if value < minNorm {
 				minNorm = value
 			}
@@ -279,9 +222,9 @@ func (service *scoreService) UtilityScoreByMethodIDService(ctx *gin.Context) {
 
 				if maxNorm != minNorm {
 					if criteriaTypes[criteria.ID] == "benefit" {
-						scoreOne = (score.NormalizeScore - minNorm) / (maxNorm - minNorm)
+						scoreOne = (score.Score - minNorm) / (maxNorm - minNorm)
 					} else if criteriaTypes[criteria.ID] == "cost" {
-						scoreOne = (maxNorm - score.NormalizeScore) / (maxNorm - minNorm)
+						scoreOne = (maxNorm - score.Score) / (maxNorm - minNorm)
 					}
 				}
 
@@ -301,7 +244,78 @@ func (service *scoreService) UtilityScoreByMethodIDService(ctx *gin.Context) {
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
-func (service *scoreService) FinalScoreByMethodIDService(ctx *gin.Context) {
+func (service *scoreService) NormalizeScoreMOORAService(ctx *gin.Context) {
+	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+	if err != nil {
+		response := map[string]string{"error": "ID tidak sesuai"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
+	if err != nil {
+		response := map[string]string{"error": "gagal mengambil data kriteria"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "gagal mengambil data score"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	// Kelompokkan score berdasarkan criteria
+	scoreByCriteria := make(map[int][]float64)
+	for _, score := range scores {
+		scoreByCriteria[score.CriteriaID] = append(scoreByCriteria[score.CriteriaID], score.Score)
+	}
+
+	// Lakukan normalisasi untuk setiap kriteria
+	for _, criteria := range criteriaList {
+		scoreValues := scoreByCriteria[criteria.ID]
+		if len(scoreValues) == 0 {
+			continue
+		}
+
+		// Hitung akar dari jumlah kuadrat
+		sumOfSquares := 0.0
+		for _, value := range scoreValues {
+			sumOfSquares += value * value
+		}
+		sqrtSum := math.Sqrt(sumOfSquares)
+
+		// Normalisasi setiap score untuk kriteria ini menggunakan metode vector normalization
+		for _, score := range scores {
+			if score.CriteriaID == criteria.ID {
+				// Rumus normalisasi MOORA: rij = xij / sqrt(Σ(xij^2))
+				normalizedValue := 0.0
+				if sqrtSum != 0 {
+					normalizedValue = score.Score / sqrtSum
+				}
+
+				// Update score dengan nilai yang sudah dinormalisasi
+				score.ScoreOne = normalizedValue
+				err = service.repository.UpdateScoreByMethodIDRepository(methodID, &score)
+				if err != nil {
+					response := map[string]string{"error": "gagal update score"}
+					helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+					return
+				}
+			}
+		}
+	}
+
+	response := map[string]string{"message": "Normalisasi score berhasil"}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
+}
+
+func (service *scoreService) ScoreTimesWeightMOORAService(ctx *gin.Context) {
+
+}
+
+func (service *scoreService) FinalScoreSMARTService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}
@@ -370,14 +384,63 @@ func (service *scoreService) FinalScoreByMethodIDService(ctx *gin.Context) {
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
-func (service *scoreService) DeleteAllScoreService(ctx *gin.Context) {
-	err := service.repository.DeleteAllScoresRepository()
+func (service *scoreService) FinalScoreMOORAService(ctx *gin.Context) {
+
+}
+
+func (service *scoreService) DeleteAllScoresSMARTService(ctx *gin.Context) {
+	// Ambil method_id dari parameter
+	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+	if err != nil {
+		response := map[string]string{"error": "ID tidak sesuai"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	// Ambil semua score untuk method ini
+	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "gagal mengambil data score"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	// Buat map untuk menyimpan total score per produk
+	productScores := make(map[int]float64)
+
+	// Jumlahkan ScoreTwo untuk setiap produk
+	for _, score := range scores {
+		productScores[score.ProductID] += score.ScoreTwo
+	}
+
+	// Simpan final score untuk setiap produk
+	for productID, totalScore := range productScores {
+		finalScore := &final_score.FinalScore{
+			ProductID:  productID,
+			MethodID:   methodID,
+			FinalScore: totalScore,
+		}
+
+		err = service.repository.CreateFinalScoreByMethodIDRepository(methodID, finalScore)
+		if err != nil {
+			response := map[string]string{"error": "gagal menyimpan final score"}
+			helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+			return
+		}
+	}
+
+	// Setelah menyimpan semua final score, baru hapus data score
+	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
 	if err != nil {
 		response := map[string]string{"error": "gagal menghapus semua data nilai"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
-	response := map[string]string{"message": "semua data nilai berhasil dihapus"}
+	response := map[string]string{"message": "perhitungan final score dan penghapusan data nilai berhasil"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
+}
+
+func (service *scoreService) DeleteAllScoresMOORAService(ctx *gin.Context) {
+
 }
