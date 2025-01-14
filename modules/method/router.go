@@ -15,7 +15,5 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	api.Use(middleware.JWTMiddleware())
 	api.GET("/methods", service.GetAllMethodService)
 	api.GET("/methods/:id", service.GetMethodByIdService)
-	api.POST("/methods", service.CreateMethodService)
-	api.PUT("/methods/:id", service.UpdateMethodService)
 	api.DELETE("/methods/:id", service.DeleteMethodService)
 }
