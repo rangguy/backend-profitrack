@@ -8,7 +8,7 @@ import (
 )
 
 type Service interface {
-	GetAllFinalScoreByMethodID(ctx *gin.Context)
+	GetAllFinalScoreByMethodIDService(ctx *gin.Context)
 }
 
 type newFinalScoreService struct {
@@ -16,10 +16,12 @@ type newFinalScoreService struct {
 }
 
 func NewFinalScoreService(repository Repository) Service {
-	return &newFinalScoreService{repository}
+	return &newFinalScoreService{
+		repository,
+	}
 }
 
-func (service *newFinalScoreService) GetAllFinalScoreByMethodID(ctx *gin.Context) {
+func (service *newFinalScoreService) GetAllFinalScoreByMethodIDService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}

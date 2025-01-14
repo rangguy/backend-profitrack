@@ -21,6 +21,8 @@ type Service interface {
 	UtilityScoreSMARTService(ctx *gin.Context)
 	ScoreOneTimesWeightByMethodIDService(ctx *gin.Context)
 	NormalizeScoreMOORAService(ctx *gin.Context)
+	CreateFinalScoresSMARTService(ctx *gin.Context)
+	CreateFinalScoresMOORAService(ctx *gin.Context)
 	DeleteAllScoresSMARTService(ctx *gin.Context)
 	DeleteAllScoresMOORAService(ctx *gin.Context)
 }
@@ -378,8 +380,7 @@ func (service *scoreService) ScoreOneTimesWeightByMethodIDService(ctx *gin.Conte
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
-func (service *scoreService) DeleteAllScoresSMARTService(ctx *gin.Context) {
-	// Ambil method_id dari parameter
+func (service *scoreService) CreateFinalScoresSMARTService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}
@@ -419,19 +420,11 @@ func (service *scoreService) DeleteAllScoresSMARTService(ctx *gin.Context) {
 		}
 	}
 
-	// Setelah menyimpan semua final score, baru hapus data score
-	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
-	if err != nil {
-		response := map[string]string{"error": "gagal menghapus semua data nilai"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-		return
-	}
-
-	response := map[string]string{"message": "perhitungan final score dan penghapusan data nilai berhasil"}
+	response := map[string]string{"message": "perhitungan final score SMART berhasil"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
-func (service *scoreService) DeleteAllScoresMOORAService(ctx *gin.Context) {
+func (service *scoreService) CreateFinalScoresMOORAService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}
@@ -503,6 +496,38 @@ func (service *scoreService) DeleteAllScoresMOORAService(ctx *gin.Context) {
 			helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 			return
 		}
+	}
+
+	response := map[string]string{"message": "perhitungan final score MOORA berhasil"}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
+}
+
+func (service *scoreService) DeleteAllScoresSMARTService(ctx *gin.Context) {
+	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+	if err != nil {
+		response := map[string]string{"error": "ID tidak sesuai"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	// Setelah menyimpan semua final score, baru hapus data score
+	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "gagal menghapus semua data nilai"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]string{"message": "perhitungan final score dan penghapusan data nilai berhasil"}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
+}
+
+func (service *scoreService) DeleteAllScoresMOORAService(ctx *gin.Context) {
+	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+	if err != nil {
+		response := map[string]string{"error": "ID tidak sesuai"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
 	}
 
 	//Setelah menyimpan semua final score, baru hapus data score
