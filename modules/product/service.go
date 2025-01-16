@@ -418,11 +418,23 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 	f := excelize.NewFile()
 	defer f.Close()
 
+	style, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+	})
+	if err != nil {
+		// Handle error
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal membuat style"})
+		return
+	}
+
 	// Buat header
 	headers := []string{"Nama Produk", "Harga Beli", "Harga Jual", "Keuntungan", "Satuan", "Stok", "Stok terjual", "Kategori"}
 	for i, header := range headers {
 		cell := string(rune('A'+i)) + "1"
 		f.SetCellValue("Sheet1", cell, header)
+		f.SetCellStyle("Sheet1", cell, cell, style)
 	}
 
 	// Isi data
