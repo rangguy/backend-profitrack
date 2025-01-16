@@ -5,7 +5,7 @@ import (
 )
 
 type Repository interface {
-	GetAllFinalScoreByMethodID(methodID int) (result []FinalScore, err error)
+	GetAllFinalScoreByMethodIDRepository(methodID int) (result []FinalScore, err error)
 }
 
 type finalScoreRepository struct {
@@ -18,7 +18,7 @@ func NewFinalScoreRepository(db *gorm.DB) Repository {
 	}
 }
 
-func (r *finalScoreRepository) GetAllFinalScoreByMethodID(methodID int) (result []FinalScore, err error) {
+func (r *finalScoreRepository) GetAllFinalScoreByMethodIDRepository(methodID int) (result []FinalScore, err error) {
 	err = r.DB.Where("method_id = ?", methodID).Order("final_score DESC").Find(&result).Error
 	return result, err
 }

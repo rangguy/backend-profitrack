@@ -6,6 +6,7 @@ import (
 	"backend-profitrack/modules/final_score"
 	"backend-profitrack/modules/method"
 	"backend-profitrack/modules/product"
+	"backend-profitrack/modules/report"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"math"
@@ -23,23 +24,26 @@ type Service interface {
 	NormalizeScoreMOORAService(ctx *gin.Context)
 	CreateFinalScoresSMARTService(ctx *gin.Context)
 	CreateFinalScoresMOORAService(ctx *gin.Context)
+	CreateDeleteFinalScoreByMethodIDService(ctx *gin.Context)
 	DeleteAllScoresSMARTService(ctx *gin.Context)
 	DeleteAllScoresMOORAService(ctx *gin.Context)
 }
 
 type scoreService struct {
-	repository         Repository
-	productRepository  product.Repository
-	criteriaRepository criteria.Repository
-	methodRepository   method.Repository
+	repository           Repository
+	productRepository    product.Repository
+	criteriaRepository   criteria.Repository
+	methodRepository     method.Repository
+	finalScoreRepository final_score.Repository
 }
 
-func NewScoreService(repo Repository, productRepo product.Repository, criteriaRepo criteria.Repository, methodRepo method.Repository) Service {
+func NewScoreService(repo Repository, productRepo product.Repository, criteriaRepo criteria.Repository, methodRepo method.Repository, finalScoreRepo final_score.Repository) Service {
 	return &scoreService{
-		repository:         repo,
-		productRepository:  productRepo,
-		criteriaRepository: criteriaRepo,
-		methodRepository:   methodRepo,
+		repository:           repo,
+		productRepository:    productRepo,
+		criteriaRepository:   criteriaRepo,
+		methodRepository:     methodRepo,
+		finalScoreRepository: finalScoreRepo,
 	}
 }
 
@@ -102,7 +106,7 @@ func (service *scoreService) CreateScoreByMethodIDService(ctx *gin.Context) {
 				UpdatedAt:  time.Now(),
 			}
 
-			err = service.repository.CreateScoreByMethodIDRepository(methodID, &newScore)
+			err = service.repository.CreateScoreRepository(&newScore)
 			if err != nil {
 				response := map[string]string{"error": "gagal menyimpan data nilai untuk produk " + produk.Name}
 				helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
@@ -539,5 +543,63 @@ func (service *scoreService) DeleteAllScoresMOORAService(ctx *gin.Context) {
 	}
 
 	response := map[string]string{"message": "perhitungan final score dan penghapusan data nilai berhasil"}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
+}
+
+func (service *scoreService) CreateDeleteFinalScoreByMethodIDService(ctx *gin.Context) {
+	var reportFinalScores report.Report
+
+	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+	if err != nil {
+		response := map[string]string{"error": "ID tidak sesuai"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	// Retrieve all final scores by method ID
+	finalScores, err := service.finalScoreRepository.GetAllFinalScoreByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "ID tidak sesuai"}
+		helpers.ResponseJSON(ctx, http.StatusNotFound, response)
+		return
+	}
+
+	// Iterate over final scores and create report entries
+	for _, score := range finalScores {
+		// Extract month and year from CreatedAt
+		year, month, _ := score.CreatedAt.Date()
+		period := fmt.Sprintf("%s %d", month.String(), year) // e.g., "January 2023"
+
+		// Create a new report entry
+		reportFinalScores = report.Report{
+			ProductID:  score.ProductID,
+			MethodID:   score.MethodID,
+			FinalScore: score.FinalScore,
+			Period:     period,
+		}
+
+		err = service.repository.CreateReportFinalScoreByMethodIDRepository(&reportFinalScores)
+		if err != nil {
+			response := map[string]string{"error": "gagal memasukkan nilai ke dalam laporan"}
+			helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+			return
+		}
+	}
+
+	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "gagal menghapus nilai akhir"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	err = service.repository.DeleteFinalScoreByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "gagal menghapus nilai akhir"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]string{"message": "Berhasil menghapus nilai dan memasukkan ke dalam laporan"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }

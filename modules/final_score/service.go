@@ -29,7 +29,7 @@ func (service *newFinalScoreService) GetAllFinalScoreByMethodIDService(ctx *gin.
 		return
 	}
 
-	finalScore, err := service.repository.GetAllFinalScoreByMethodID(methodID)
+	finalScore, err := service.repository.GetAllFinalScoreByMethodIDRepository(methodID)
 	if err != nil {
 		helpers.ResponseJSON(ctx, http.StatusNotFound, err.Error())
 		return

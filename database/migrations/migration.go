@@ -6,6 +6,7 @@ import (
 	"backend-profitrack/modules/final_score"
 	"backend-profitrack/modules/method"
 	"backend-profitrack/modules/product"
+	"backend-profitrack/modules/report"
 	"backend-profitrack/modules/score"
 	"backend-profitrack/modules/user"
 	"fmt"
@@ -18,7 +19,7 @@ func Migrations(db *gorm.DB) {
 	//if err != nil {
 	//	panic(err)
 	//}
-	err = db.AutoMigrate(&user.User{}, &category.Category{}, &product.Product{}, &criteria.Criteria{}, &method.Method{}, &score.Score{}, &final_score.FinalScore{})
+	err = db.AutoMigrate(&user.User{}, &category.Category{}, &product.Product{}, &criteria.Criteria{}, &method.Method{}, &score.Score{}, &final_score.FinalScore{}, &report.Report{})
 	if err != nil {
 		panic(err)
 	}

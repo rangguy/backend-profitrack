@@ -3,6 +3,7 @@ package score
 import (
 	"backend-profitrack/middleware"
 	"backend-profitrack/modules/criteria"
+	"backend-profitrack/modules/final_score"
 	"backend-profitrack/modules/method"
 	"backend-profitrack/modules/product"
 	"github.com/gin-gonic/gin"
@@ -14,7 +15,8 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	productRepo := product.NewProductRepository(db)
 	criteriaRepo := criteria.NewCriteriaRepository(db)
 	methodRepo := method.NewMethodRepository(db)
-	service := NewScoreService(repo, productRepo, criteriaRepo, methodRepo)
+	finalScoreRepo := final_score.NewFinalScoreRepository(db)
+	service := NewScoreService(repo, productRepo, criteriaRepo, methodRepo, finalScoreRepo)
 
 	api := router.Group("/api")
 	api.Use(middleware.LoggingMiddleware())
@@ -29,4 +31,7 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	//MOORA
 	api.PUT("/scores/:methodID/MOORA", service.NormalizeScoreMOORAService, service.ScoreOneTimesWeightByMethodIDService, service.CreateFinalScoresMOORAService)
 	api.DELETE("/scores/:methodID/MOORA", service.DeleteAllScoresMOORAService)
+
+	// Delete Final Score And Create Report
+	api.DELETE("/final_scores/:methodID", service.CreateDeleteFinalScoreByMethodIDService)
 }

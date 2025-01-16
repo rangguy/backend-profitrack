@@ -1,0 +1,20 @@
+package report
+
+import "gorm.io/gorm"
+
+type Repository interface {
+	GetAllReportRepository(methodID int, period string) (result []Report, err error)
+}
+
+type newReportRepository struct {
+	DB *gorm.DB
+}
+
+func NewReportRepository(db *gorm.DB) Repository {
+	return &newReportRepository{db}
+}
+
+func (r *newReportRepository) GetAllReportRepository(methodID int, period string) (result []Report, err error) {
+	err = r.DB.Preload("Product.Category").Where("method_id = ? AND period = ?", methodID, period).Find(&result).Error
+	return result, err
+}

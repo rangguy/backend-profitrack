@@ -384,7 +384,7 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			PurchaseCost: purchaseCost,
 			PriceSale:    priceSale,
 			Profit:       priceSale - purchaseCost,
-			Unit:         strings.TrimSpace(row[3]), // satuan di kolom 4
+			Unit:         strings.TrimSpace(row[3]),
 			Stock:        stock,
 			Sold:         sold,
 			CategoryID:   category.ID,

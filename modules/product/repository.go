@@ -36,7 +36,7 @@ func (r *productRepository) GetCategoryByNameRepository(name string) (category.C
 }
 
 func (r *productRepository) GetAllProductRepository() (result []Product, err error) {
-	err = r.DB.Preload("Category").Find(&result).Error
+	err = r.DB.Preload("Category").Order("id ASC").Find(&result).Error
 	return result, err
 }
 
