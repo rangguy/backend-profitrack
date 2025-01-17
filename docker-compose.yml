@@ -1,0 +1,24 @@
+# docker-compose.yml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgresql
+      - DB_NAME=profitrack
+      - DB_PORT=5432
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgresql
+      - POSTGRES_DB=profitrack
+    ports:
+      - "5432:5432"

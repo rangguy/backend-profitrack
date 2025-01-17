@@ -564,6 +564,12 @@ func (service *scoreService) CreateDeleteFinalScoreByMethodIDService(ctx *gin.Co
 		return
 	}
 
+	if len(finalScores) == 0 {
+		response := map[string]string{"error": "data nilai akhir masih kosong"}
+		helpers.ResponseJSON(ctx, http.StatusNotFound, response)
+		return
+	}
+
 	// Iterate over final scores and create report entries
 	for _, score := range finalScores {
 		// Extract month and year from CreatedAt
@@ -588,7 +594,7 @@ func (service *scoreService) CreateDeleteFinalScoreByMethodIDService(ctx *gin.Co
 
 	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
 	if err != nil {
-		response := map[string]string{"error": "gagal menghapus nilai akhir"}
+		response := map[string]string{"error": "gagal menghapus detail nilai"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
