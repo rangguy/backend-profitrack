@@ -13,6 +13,7 @@ import (
 type Service interface {
 	GetAllReportService(ctx *gin.Context)
 	ExportExcelService(ctx *gin.Context)
+	DeleteAllReportService(ctx *gin.Context)
 }
 
 type reportService struct {
@@ -119,8 +120,34 @@ func (service *reportService) ExportExcelService(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 
-	if err := f.Write(ctx.Writer); err != nil {
+	if err = f.Write(ctx.Writer); err != nil {
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal membuat file Excel"})
 		return
 	}
+}
+
+func (service *reportService) DeleteAllReportService(ctx *gin.Context) {
+	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+	if err != nil {
+		response := map[string]string{"error": "Invalid method ID"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	period := ctx.PostForm("period")
+	if period == "" {
+		response := map[string]string{"error": "Period is required"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	err = service.repository.DeleteAllReportRepository(methodID, period)
+	if err != nil {
+		response := map[string]string{"error": "gagal menghapus nilai laporan"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]string{"message": "berhasil menghapus nilai laporan"}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
