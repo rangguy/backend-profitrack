@@ -2,15 +2,13 @@ package product
 
 import (
 	"backend-profitrack/middleware"
-	"backend-profitrack/modules/category"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 func Initiator(router *gin.Engine, db *gorm.DB) {
 	repo := NewProductRepository(db)
-	categoryRepo := category.NewCategoryRepository(db)
-	service := NewProductService(repo, categoryRepo)
+	service := NewProductService(repo)
 
 	api := router.Group("/api")
 	api.Use(middleware.LoggingMiddleware())

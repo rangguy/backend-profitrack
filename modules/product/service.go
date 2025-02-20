@@ -2,7 +2,6 @@ package product
 
 import (
 	"backend-profitrack/helpers"
-	"backend-profitrack/modules/category"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -27,14 +26,12 @@ type Service interface {
 }
 
 type productService struct {
-	repository         Repository
-	categoryRepository category.Repository
+	repository Repository
 }
 
-func NewProductService(repo Repository, categoryRepo category.Repository) Service {
+func NewProductService(repo Repository) Service {
 	return &productService{
-		repository:         repo,
-		categoryRepository: categoryRepo,
+		repository: repo,
 	}
 }
 
@@ -56,8 +53,6 @@ func (service *productService) GetAllProductService(ctx *gin.Context) {
 			Unit:         product.Unit,
 			Stock:        product.Stock,
 			Sold:         product.Sold,
-			CategoryID:   product.CategoryID,
-			CategoryName: product.Category.Name,
 		})
 	}
 
@@ -84,8 +79,7 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 		newProduct.PriceSale == 0 ||
 		newProduct.Unit == "" ||
 		newProduct.Stock == 0 ||
-		newProduct.Sold == 0 ||
-		newProduct.CategoryID == 0 {
+		newProduct.Sold == 0 {
 		response = map[string]string{"error": "semua field harus diisi dengan nilai yang valid"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
@@ -106,15 +100,6 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
-
-	categoryData, err := service.categoryRepository.GetCategoryByIdRepository(newProduct.CategoryID)
-	if err != nil {
-		response = map[string]string{"error": "gagal mengambil kategori"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-		return
-	}
-
-	newProduct.Category = categoryData
 
 	ctx.JSON(http.StatusCreated, newProduct)
 }
@@ -154,8 +139,6 @@ func (service *productService) GetProductByIdService(ctx *gin.Context) {
 		Unit:         product.Unit,
 		Stock:        product.Stock,
 		Sold:         product.Sold,
-		CategoryID:   product.CategoryID,
-		CategoryName: product.Category.Name,
 	})
 }
 
@@ -193,14 +176,13 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 		product.PurchaseCost == 0 ||
 		product.Unit == "" ||
 		product.Stock == 0 ||
-		product.Sold == 0 ||
-		product.CategoryID == 0 {
+		product.Sold == 0 {
 		response = map[string]string{"error": "semua field harus diisi dengan nilai yang valid"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
-	if existingProduct.Name == product.Name && existingProduct.PriceSale == product.PriceSale && existingProduct.PurchaseCost == product.PurchaseCost && existingProduct.Profit == product.Profit && existingProduct.Unit == product.Unit && existingProduct.Stock == product.Stock && existingProduct.CategoryID == product.CategoryID {
+	if existingProduct.Name == product.Name && existingProduct.PriceSale == product.PriceSale && existingProduct.PurchaseCost == product.PurchaseCost && existingProduct.Profit == product.Profit && existingProduct.Unit == product.Unit && existingProduct.Stock == product.Stock {
 		response = map[string]string{"error": "masukkan minimal satu data yang baru"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
@@ -213,7 +195,6 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	existingProduct.Unit = product.Unit
 	existingProduct.Stock = product.Stock
 	existingProduct.Sold = product.Sold
-	existingProduct.CategoryID = product.CategoryID
 	existingProduct.UpdatedAt = time.Now()
 
 	err = service.repository.UpdateProductRepository(existingProduct)
@@ -307,10 +288,10 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			continue // Skip header row
 		}
 
-		// Periksa jumlah kolom yang dibutuhkan (7 kolom sesuai format)
-		if len(row) < 7 {
+		// Periksa jumlah kolom yang dibutuhkan (6 kolom sesuai format)
+		if len(row) < 6 {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("Format tidak valid pada baris %d: jumlah kolom kurang dari 7", i+1),
+				"error": fmt.Sprintf("Format tidak valid pada baris %d: jumlah kolom kurang dari 6", i+1),
 			})
 			return
 		}
@@ -370,15 +351,6 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			return
 		}
 
-		// Get category using the last column (index 6)
-		category, err := service.repository.GetCategoryByNameRepository(row[6])
-		if err != nil {
-			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("Kategori '%s' tidak ditemukan", row[6]),
-			})
-			return
-		}
-
 		product := Product{
 			Name:         strings.TrimSpace(row[0]),
 			PurchaseCost: purchaseCost,
@@ -387,7 +359,6 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 			Unit:         strings.TrimSpace(row[3]),
 			Stock:        stock,
 			Sold:         sold,
-			CategoryID:   category.ID,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		}
@@ -430,7 +401,7 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 	}
 
 	// Buat header
-	headers := []string{"Nama Produk", "Harga Beli", "Harga Jual", "Keuntungan", "Satuan", "Stok", "Stok terjual", "Kategori"}
+	headers := []string{"Nama Produk", "Harga Beli", "Harga Jual", "Keuntungan", "Satuan", "Stok", "Stok terjual"}
 	for i, header := range headers {
 		cell := string(rune('A'+i)) + "1"
 		f.SetCellValue("Sheet1", cell, header)
@@ -442,12 +413,11 @@ func (service *productService) ExportExcelService(ctx *gin.Context) {
 		row := i + 2
 		f.SetCellValue("Sheet1", fmt.Sprintf("A%d", row), product.Name)
 		f.SetCellValue("Sheet1", fmt.Sprintf("B%d", row), product.PurchaseCost)
-		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), product.PriceSale)
-		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.Profit)
+		f.SetCellValue("Sheet1", fmt.Sprintf("C%d", row), product.PriceSale)
+		f.SetCellValue("Sheet1", fmt.Sprintf("D%d", row), product.Profit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("E%d", row), product.Unit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("F%d", row), product.Stock)
 		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), product.Sold)
-		f.SetCellValue("Sheet1", fmt.Sprintf("H%d", row), product.Category.Name)
 	}
 
 	// Format nama file dengan tanggal

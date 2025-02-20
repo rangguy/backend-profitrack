@@ -90,7 +90,7 @@ func (service *reportService) ExportExcelService(ctx *gin.Context) {
 	}
 
 	// Create header
-	headers := []string{"Rank", "Nama Produk", "Skor Akhir", "Harga Beli", "Harga Jual", "Keuntungan", "Satuan", "Stok", "Stok Terjual", "Kategori"}
+	headers := []string{"Rank", "Nama Produk", "Skor Akhir", "Harga Beli", "Harga Jual", "Keuntungan", "Satuan", "Stok", "Stok Terjual"}
 	for i, header := range headers {
 		cell := string(rune('A'+i)) + "1"
 		f.SetCellValue("Sheet1", cell, header)
@@ -110,7 +110,6 @@ func (service *reportService) ExportExcelService(ctx *gin.Context) {
 		f.SetCellValue("Sheet1", fmt.Sprintf("G%d", row), report.Product.Unit)
 		f.SetCellValue("Sheet1", fmt.Sprintf("H%d", row), report.Product.Stock)
 		f.SetCellValue("Sheet1", fmt.Sprintf("I%d", row), report.Product.Sold)
-		f.SetCellValue("Sheet1", fmt.Sprintf("J%d", row), report.Product.Category.Name)
 	}
 
 	currentTime := time.Now()

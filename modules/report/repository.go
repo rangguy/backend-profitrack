@@ -16,7 +16,7 @@ func NewReportRepository(db *gorm.DB) Repository {
 }
 
 func (r *newReportRepository) GetAllReportRepository(methodID int, period string) (result []Report, err error) {
-	err = r.DB.Preload("Product.Category").Where("method_id = ? AND period = ?", methodID, period).Find(&result).Error
+	err = r.DB.Preload("Product").Where("method_id = ? AND period = ?", methodID, period).Find(&result).Error
 	return result, err
 }
 

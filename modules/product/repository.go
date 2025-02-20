@@ -1,7 +1,6 @@
 package product
 
 import (
-	"backend-profitrack/modules/category"
 	"gorm.io/gorm"
 )
 
@@ -12,7 +11,6 @@ type Repository interface {
 	UpdateProductRepository(product Product) (err error)
 	DeleteProductRepository(product Product) (err error)
 	BulkCreateProductRepository(products []Product) error
-	GetCategoryByNameRepository(name string) (category.Category, error)
 }
 
 type productRepository struct {
@@ -29,14 +27,8 @@ func (r *productRepository) BulkCreateProductRepository(products []Product) erro
 	return r.DB.Create(&products).Error
 }
 
-func (r *productRepository) GetCategoryByNameRepository(name string) (category.Category, error) {
-	var categoryName category.Category
-	err := r.DB.Where("name = ?", name).First(&categoryName).Error
-	return categoryName, err
-}
-
 func (r *productRepository) GetAllProductRepository() (result []Product, err error) {
-	err = r.DB.Preload("Category").Order("id ASC").Find(&result).Error
+	err = r.DB.Order("id ASC").Find(&result).Error
 	return result, err
 }
 
@@ -46,7 +38,7 @@ func (r *productRepository) CreateProductRepository(product *Product) (err error
 }
 
 func (r *productRepository) GetProductByIdRepository(productID int) (product Product, err error) {
-	err = r.DB.Preload("Category").First(&product, productID).Error
+	err = r.DB.First(&product, productID).Error
 	return product, err
 }
 

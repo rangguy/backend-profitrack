@@ -4,7 +4,6 @@ import (
 	"backend-profitrack/database"
 	"backend-profitrack/database/migrations"
 	"backend-profitrack/middleware"
-	"backend-profitrack/modules/category"
 	"backend-profitrack/modules/criteria"
 	"backend-profitrack/modules/final_score"
 	"backend-profitrack/modules/method"
@@ -30,7 +29,6 @@ func InitiateRouter(db *gorm.DB) {
 
 	router.Use(middleware.CORSMiddleware())
 	user.Initiator(router, db)
-	category.Initiator(router, db)
 	product.Initiator(router, db)
 	criteria.Initiator(router, db)
 	method.Initiator(router, db)
