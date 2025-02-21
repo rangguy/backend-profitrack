@@ -17,8 +17,6 @@ import (
 )
 
 type Service interface {
-	CreateScoreByMethodIDService(ctx *gin.Context)
-	GetAllScoresByMethodIDService(ctx *gin.Context)
 	UtilityScoreSMARTService(ctx *gin.Context)
 	ScoreOneTimesWeightByMethodIDService(ctx *gin.Context)
 	NormalizeScoreMOORAService(ctx *gin.Context)
@@ -45,123 +43,6 @@ func NewScoreService(repo Repository, productRepo product.Repository, criteriaRe
 		methodRepository:     methodRepo,
 		finalScoreRepository: finalScoreRepo,
 	}
-}
-
-func (service *scoreService) CreateScoreByMethodIDService(ctx *gin.Context) {
-	methodID, err := strconv.Atoi(ctx.Param("methodID"))
-	if err != nil {
-		response := map[string]string{"error": "ID tidak sesuai"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
-	if err != nil {
-		response := map[string]string{"error": "gagal mengambil data kriteria"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-		return
-	}
-
-	productList, err := service.productRepository.GetAllProductRepository()
-	if err != nil {
-		response := map[string]string{"error": "gagal mengambil data produk"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-		return
-	}
-
-	for _, produk := range productList {
-		for _, kriteria := range criteriaList {
-			var nilai float64
-			purchaseCost := float64(produk.PurchaseCost)
-			priceSale := float64(produk.PriceSale)
-			profit := float64(produk.Profit)
-			stock := float64(produk.Stock)
-			sold := float64(produk.Sold)
-
-			switch strings.ToLower(kriteria.Name) {
-			case strings.ToLower("Return On Investment"):
-				if produk.PurchaseCost != 0 {
-					nilai = (profit * sold) / (purchaseCost * stock)
-				}
-			case strings.ToLower("Net Profit Margin"):
-				if produk.PriceSale != 0 {
-					nilai = (profit * sold) / (priceSale * sold)
-				}
-			case strings.ToLower("Rasio Efisiensi"):
-				if produk.Profit != 0 {
-					nilai = (purchaseCost * sold) / (sold * priceSale)
-				}
-			default:
-				response := map[string]string{"error": "kriteria tidak dikenali"}
-				helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-				return
-			}
-
-			newScore := Score{
-				ProductID:  produk.ID,
-				CriteriaID: kriteria.ID,
-				MethodID:   methodID,
-				Score:      nilai,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
-			}
-
-			err = service.repository.CreateScoreRepository(&newScore)
-			if err != nil {
-				response := map[string]string{"error": "gagal menyimpan data nilai untuk produk " + produk.Name}
-				helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-				return
-			}
-		}
-	}
-
-	response := map[string]string{"message": "nilai produk berhasil dihitung untuk semua kriteria dan disimpan"}
-	helpers.ResponseJSON(ctx, http.StatusCreated, response)
-}
-
-func (service *scoreService) GetAllScoresByMethodIDService(ctx *gin.Context) {
-	methodID, err := strconv.Atoi(ctx.Param("methodID"))
-	if err != nil {
-		response := map[string]string{"error": "ID tidak sesuai"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	values, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
-	if err != nil {
-		helpers.ResponseJSON(ctx, http.StatusNotFound, err.Error())
-		return
-	}
-
-	var result []Score
-	for _, value := range values {
-		result = append(result, Score{
-			ID:         value.ID,
-			Score:      value.Score,
-			ScoreOne:   value.ScoreOne,
-			ScoreTwo:   value.ScoreTwo,
-			ProductID:  value.ProductID,
-			CriteriaID: value.CriteriaID,
-			MethodID:   value.MethodID,
-			CreatedAt:  value.CreatedAt,
-			UpdatedAt:  value.UpdatedAt,
-		})
-	}
-
-	if len(result) == 0 {
-		// Ambil data method untuk mendapatkan namanya
-		method, err := service.methodRepository.GetMethodByIdRepository(methodID)
-		if err != nil {
-			response := map[string]string{"error": "Metode tidak ditemukan"}
-			helpers.ResponseJSON(ctx, http.StatusNotFound, response)
-			return
-		}
-		response := map[string]string{"message": fmt.Sprintf("data nilai dengan metode %s masih kosong", method.Name)}
-		helpers.ResponseJSON(ctx, http.StatusOK, response)
-		return
-	}
-
-	helpers.ResponseJSON(ctx, http.StatusOK, result)
 }
 
 func (service *scoreService) UtilityScoreSMARTService(ctx *gin.Context) {

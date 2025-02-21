@@ -5,6 +5,7 @@ import (
 	"backend-profitrack/database/migrations"
 	"backend-profitrack/middleware"
 	"backend-profitrack/modules/criteria"
+	"backend-profitrack/modules/criteria_score"
 	"backend-profitrack/modules/final_score"
 	"backend-profitrack/modules/method"
 	"backend-profitrack/modules/product"
@@ -32,6 +33,7 @@ func InitiateRouter(db *gorm.DB) {
 	product.Initiator(router, db)
 	criteria.Initiator(router, db)
 	method.Initiator(router, db)
+	criteria_score.Initiator(router, db)
 	score.Initiator(router, db)
 	final_score.Initiator(router, db)
 	report.Initiator(router, db)
