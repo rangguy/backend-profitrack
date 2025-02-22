@@ -8,8 +8,8 @@ type Repository interface {
 	GetAllProductRepository() (result []Product, err error)
 	CreateProductRepository(product *Product) (err error)
 	GetProductByIdRepository(productID int) (product Product, err error)
-	UpdateProductRepository(product Product) (err error)
-	DeleteProductRepository(product Product) (err error)
+	UpdateProductRepository(product *Product) (err error)
+	DeleteProductRepository(product *Product) (err error)
 	BulkCreateProductRepository(products []Product) error
 }
 
@@ -33,7 +33,7 @@ func (r *productRepository) GetAllProductRepository() (result []Product, err err
 }
 
 func (r *productRepository) CreateProductRepository(product *Product) (err error) {
-	err = r.DB.Create(&product).Error
+	err = r.DB.Create(product).Error
 	return err
 }
 
@@ -42,12 +42,12 @@ func (r *productRepository) GetProductByIdRepository(productID int) (product Pro
 	return product, err
 }
 
-func (r *productRepository) UpdateProductRepository(product Product) (err error) {
-	err = r.DB.Save(&product).Error
+func (r *productRepository) UpdateProductRepository(product *Product) (err error) {
+	err = r.DB.Save(product).Error
 	return err
 }
 
-func (r *productRepository) DeleteProductRepository(product Product) (err error) {
-	err = r.DB.Delete(&product).Error
+func (r *productRepository) DeleteProductRepository(product *Product) (err error) {
+	err = r.DB.Delete(product).Error
 	return err
 }

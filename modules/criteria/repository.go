@@ -8,8 +8,8 @@ type Repository interface {
 	GetAllCriteriaRepository() (result []Criteria, err error)
 	CreateCriteriaRepository(criteria *Criteria) (err error)
 	GetCriteriaByIdRepository(criteriaID int) (criteria Criteria, err error)
-	UpdateCriteriaRepository(criteria Criteria) (err error)
-	DeleteCriteriaRepository(criteria Criteria) (err error)
+	UpdateCriteriaRepository(criteria *Criteria) (err error)
+	DeleteCriteriaRepository(criteria *Criteria) (err error)
 }
 
 type criteriaRepository struct {
@@ -28,7 +28,7 @@ func (r *criteriaRepository) GetAllCriteriaRepository() (result []Criteria, err 
 }
 
 func (r *criteriaRepository) CreateCriteriaRepository(criteria *Criteria) (err error) {
-	err = r.DB.Create(&criteria).Error
+	err = r.DB.Create(criteria).Error
 	return err
 }
 
@@ -37,12 +37,12 @@ func (r *criteriaRepository) GetCriteriaByIdRepository(criteriaID int) (criteria
 	return criteria, err
 }
 
-func (r *criteriaRepository) UpdateCriteriaRepository(criteria Criteria) (err error) {
-	err = r.DB.Save(&criteria).Error
+func (r *criteriaRepository) UpdateCriteriaRepository(criteria *Criteria) (err error) {
+	err = r.DB.Save(criteria).Error
 	return err
 }
 
-func (r *criteriaRepository) DeleteCriteriaRepository(criteria Criteria) (err error) {
-	err = r.DB.Delete(&criteria).Error
+func (r *criteriaRepository) DeleteCriteriaRepository(criteria *Criteria) (err error) {
+	err = r.DB.Delete(criteria).Error
 	return err
 }

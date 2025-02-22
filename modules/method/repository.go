@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type Repository interface {
 	GetAllMethodRepository() (result []Method, err error)
 	GetMethodByIdRepository(methodID int) (method Method, err error)
-	DeleteMethodRepository(method Method) (err error)
+	DeleteMethodRepository(method *Method) (err error)
 }
 
 type methodRepository struct {
@@ -51,7 +51,7 @@ func (r *methodRepository) GetMethodByIdRepository(methodID int) (method Method,
 	return method, err
 }
 
-func (r *methodRepository) DeleteMethodRepository(method Method) (err error) {
-	err = r.DB.Delete(&method).Error
+func (r *methodRepository) DeleteMethodRepository(method *Method) (err error) {
+	err = r.DB.Delete(method).Error
 	return err
 }

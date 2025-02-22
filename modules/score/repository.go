@@ -44,7 +44,7 @@ func (r *scoreRepository) CreateFinalScoreByMethodIDRepository(methodID int, fin
 }
 
 func (r *scoreRepository) UpdateScoreByMethodIDRepository(methodID int, score *Score) (err error) {
-	err = r.DB.Where("method_id = ?", methodID).Save(&score).Error
+	err = r.DB.Where("method_id = ?", methodID).Save(score).Error
 	return err
 }
 
@@ -54,7 +54,7 @@ func (r *scoreRepository) DeleteAllScoresByMethodIDRepository(methodID int) (err
 }
 
 func (r *scoreRepository) CreateReportFinalScoreByMethodIDRepository(report *report.Report) (err error) {
-	err = r.DB.Create(&report).Error
+	err = r.DB.Create(report).Error
 	return err
 }
 
