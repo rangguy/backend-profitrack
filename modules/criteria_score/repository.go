@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 type Repository interface {
 	GetAllCriteriaScoreRepository() (result []CriteriaScore, err error)
+	GetCriteriaScoreByIdRepository(criteriaScoreID int) (criteriaScore CriteriaScore, err error)
 	CreateCriteriaScoreRepository(criteriaScore *CriteriaScore) (err error)
 	UpdateCriteriaScoreRepository(criteriaScore *CriteriaScore) (err error)
 	DeleteCriteriaScoreRepository(criteriaScore *CriteriaScore) (err error)
@@ -20,8 +21,13 @@ func NewCriteriaScoreRepository(db *gorm.DB) Repository {
 }
 
 func (r *criteriaScoreRepository) GetAllCriteriaScoreRepository() (result []CriteriaScore, err error) {
-	err = r.DB.Find(&result).Error
+	err = r.DB.Order("id ASC").Find(&result).Error
 	return result, err
+}
+
+func (r *criteriaScoreRepository) GetCriteriaScoreByIdRepository(criteriaScoreID int) (criteriaScore CriteriaScore, err error) {
+	err = r.DB.First(&criteriaScore, criteriaScoreID).Error
+	return criteriaScore, err
 }
 
 func (r *criteriaScoreRepository) CreateCriteriaScoreRepository(criteriaScore *CriteriaScore) (err error) {
@@ -35,6 +41,6 @@ func (r *criteriaScoreRepository) UpdateCriteriaScoreRepository(criteriaScore *C
 }
 
 func (r *criteriaScoreRepository) DeleteCriteriaScoreRepository(criteriaScore *CriteriaScore) (err error) {
-	err = r.DB.Delete(&criteriaScore).Error
+	err = r.DB.Delete(criteriaScore).Error
 	return err
 }

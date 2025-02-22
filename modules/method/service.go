@@ -100,7 +100,7 @@ func (service *methodService) DeleteMethodService(ctx *gin.Context) {
 	}
 
 	method.ID = id
-	err = service.repository.DeleteMethodRepository(method)
+	err = service.repository.DeleteMethodRepository(&method)
 	if err != nil {
 		response := map[string]string{"error": "gagal menghapus data metode"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)

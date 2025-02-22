@@ -197,7 +197,7 @@ func (service *productService) UpdateProductService(ctx *gin.Context) {
 	existingProduct.Sold = product.Sold
 	existingProduct.UpdatedAt = time.Now()
 
-	err = service.repository.UpdateProductRepository(existingProduct)
+	err = service.repository.UpdateProductRepository(&existingProduct)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key score violates unique constraint \"uni_products_name\"") {
 			response = map[string]string{"message": "nama produk sudah ada"}
@@ -237,7 +237,7 @@ func (service *productService) DeleteProductService(ctx *gin.Context) {
 	}
 
 	product.ID = id
-	err = service.repository.DeleteProductRepository(product)
+	err = service.repository.DeleteProductRepository(&product)
 	if err != nil {
 		response = map[string]string{"error": "gagal menghapus data produk"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
@@ -262,7 +262,7 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 
 	// Simpan file sementara
 	tempFile := fmt.Sprintf("temp/%d-%s", time.Now().Unix(), file.Filename)
-	if err := ctx.SaveUploadedFile(file, tempFile); err != nil {
+	if err = ctx.SaveUploadedFile(file, tempFile); err != nil {
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
 		return
 	}

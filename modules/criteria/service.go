@@ -171,7 +171,7 @@ func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
 
 	existingCriteria.UpdatedAt = time.Now()
 
-	err = service.repository.UpdateCriteriaRepository(existingCriteria)
+	err = service.repository.UpdateCriteriaRepository(&existingCriteria)
 	if err != nil {
 		response := map[string]string{"error": "Gagal mengubah data kriteria"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
@@ -204,7 +204,7 @@ func (service *criteriaService) DeleteCriteriaService(ctx *gin.Context) {
 	}
 
 	criteria.ID = id
-	err = service.repository.DeleteCriteriaRepository(criteria)
+	err = service.repository.DeleteCriteriaRepository(&criteria)
 	if err != nil {
 		response := map[string]string{"error": "gagal menghapus data kriteria"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)

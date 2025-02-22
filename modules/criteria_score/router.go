@@ -20,5 +20,6 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 
 	api.GET("/criteria_scores", service.GetAllCriteriaScoreService)
 	api.POST("/criteria_scores", service.CreateAllCriteriaScoreService)
-
+	api.PUT("criteria_scores", service.UpdateCriteriaScoreService)
+	api.DELETE("/criteria_scores/:id", service.DeleteCriteriaScoreService)
 }
