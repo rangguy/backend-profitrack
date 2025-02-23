@@ -28,7 +28,7 @@ func NewScoreRepository(db *gorm.DB) Repository {
 
 func (r *scoreRepository) GetAllScoreByMethodIDRepository(methodID int) (result []Score, err error) {
 	err = r.DB.Where("method_id = ?", methodID).
-		Order("id ASC").
+		Order("product_id ASC, criteria_id ASC").
 		Find(&result).Error
 	return result, err
 }

@@ -269,15 +269,15 @@ func (service *criteriaScoreService) DeleteCriteriaScoreService(ctx *gin.Context
 	var response map[string]string
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		response = map[string]string{"error": "ID tidak sesuai"}
+		response = map[string]string{"error": "produk ID tidak sesuai"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
-	criteriaScore, err := service.repository.GetCriteriaScoreByIdRepository(id)
+	_, err = service.repository.GetCriteriaScoreByProductIdRepository(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			response = map[string]string{"error": fmt.Sprintf("Nilai Kriteria dengan ID:%d tidak ditemukan", id)}
+			response = map[string]string{"error": fmt.Sprintf("Nilai Kriteria dengan produk ID:%d tidak ditemukan", id)}
 			helpers.ResponseJSON(ctx, http.StatusNotFound, response)
 			return
 		}
@@ -286,13 +286,25 @@ func (service *criteriaScoreService) DeleteCriteriaScoreService(ctx *gin.Context
 		return
 	}
 
-	err = service.repository.DeleteCriteriaScoreRepository(&criteriaScore)
+	product, err := service.productRepository.GetProductByIdRepository(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response = map[string]string{"error": fmt.Sprintf("Data produk ID:%d tidak ditemukan", id)}
+			helpers.ResponseJSON(ctx, http.StatusNotFound, response)
+			return
+		}
+		response = map[string]string{"error": err.Error()}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	err = service.repository.DeleteCriteriaScoreRepository(id)
 	if err != nil {
 		response = map[string]string{"error": "gagal menghapus data nilai kriteria"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
-	response = map[string]string{"message": "data nilai kriteria berhasil dihapus"}
+	response = map[string]string{"message": fmt.Sprintf("data nilai kriteria produk:%s berhasil dihapus", product.Name)}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
