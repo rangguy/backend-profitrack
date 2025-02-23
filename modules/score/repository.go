@@ -34,12 +34,12 @@ func (r *scoreRepository) GetAllScoreByMethodIDRepository(methodID int) (result 
 }
 
 func (r *scoreRepository) CreateScoreRepository(score *Score) (err error) {
-	err = r.DB.Create(&score).Error
+	err = r.DB.Create(score).Error
 	return err
 }
 
 func (r *scoreRepository) CreateFinalScoreByMethodIDRepository(methodID int, finalScore *final_score.FinalScore) (err error) {
-	err = r.DB.Where("method_id = ?", methodID).Create(&finalScore).Error
+	err = r.DB.Where("method_id = ?", methodID).Create(finalScore).Error
 	return err
 }
 

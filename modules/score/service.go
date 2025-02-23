@@ -3,6 +3,7 @@ package score
 import (
 	"backend-profitrack/helpers"
 	"backend-profitrack/modules/criteria"
+	"backend-profitrack/modules/criteria_score"
 	"backend-profitrack/modules/final_score"
 	"backend-profitrack/modules/method"
 	"backend-profitrack/modules/product"
@@ -11,12 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type Service interface {
+	GetAllScoreByMethodIDService(ctx *gin.Context)
 	UtilityScoreSMARTService(ctx *gin.Context)
 	ScoreOneTimesWeightByMethodIDService(ctx *gin.Context)
 	NormalizeScoreMOORAService(ctx *gin.Context)
@@ -28,20 +31,58 @@ type Service interface {
 }
 
 type scoreService struct {
-	repository           Repository
-	productRepository    product.Repository
-	criteriaRepository   criteria.Repository
-	methodRepository     method.Repository
-	finalScoreRepository final_score.Repository
+	repository              Repository
+	productRepository       product.Repository
+	criteriaRepository      criteria.Repository
+	methodRepository        method.Repository
+	criteriaScoreRepository criteria_score.Repository
+	finalScoreRepository    final_score.Repository
 }
 
-func NewScoreService(repo Repository, productRepo product.Repository, criteriaRepo criteria.Repository, methodRepo method.Repository, finalScoreRepo final_score.Repository) Service {
+func NewScoreService(repo Repository, productRepo product.Repository, criteriaRepo criteria.Repository, methodRepo method.Repository, criteriaScoreRepo criteria_score.Repository, finalScoreRepo final_score.Repository) Service {
 	return &scoreService{
-		repository:           repo,
-		productRepository:    productRepo,
-		criteriaRepository:   criteriaRepo,
-		methodRepository:     methodRepo,
-		finalScoreRepository: finalScoreRepo,
+		repository:              repo,
+		productRepository:       productRepo,
+		criteriaRepository:      criteriaRepo,
+		methodRepository:        methodRepo,
+		criteriaScoreRepository: criteriaScoreRepo,
+		finalScoreRepository:    finalScoreRepo,
+	}
+}
+
+func (service *scoreService) GetAllScoreByMethodIDService(ctx *gin.Context) {
+	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+	if err != nil {
+		response := map[string]string{"error": "ID tidak sesuai"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
+	if err != nil {
+		response := map[string]string{"error": "gagal mengambil data score"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	var result []Score
+	for _, score := range scores {
+		result = append(result, Score{
+			ID:         score.ID,
+			ProductID:  score.ProductID,
+			CriteriaID: score.CriteriaID,
+			ScoreOne:   score.ScoreOne,
+			CreatedAt:  score.CreatedAt,
+			UpdatedAt:  score.UpdatedAt,
+		})
+	}
+
+	if result == nil {
+		response := map[string]string{"message": "data nilai masih kosong"}
+		helpers.ResponseJSON(ctx, http.StatusOK, response)
+		return
+	} else {
+		helpers.ResponseJSON(ctx, http.StatusOK, result)
 	}
 }
 
@@ -53,15 +94,15 @@ func (service *scoreService) UtilityScoreSMARTService(ctx *gin.Context) {
 		return
 	}
 
-	// Step 1: Retrieve all scores for the given methodID
-	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
+	// Step 1: Retrieve all scores and group by product
+	scores, err := service.criteriaScoreRepository.GetAllCriteriaScoreRepository()
 	if err != nil {
 		response := map[string]string{"error": "gagal mengambil data score"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
-	// Step 2: Retrieve all criteria to get weights and types
+	// Step 2: Retrieve all criteria
 	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
 	if err != nil {
 		response := map[string]string{"error": "gagal mengambil data kriteria"}
@@ -69,58 +110,81 @@ func (service *scoreService) UtilityScoreSMARTService(ctx *gin.Context) {
 		return
 	}
 
-	// Step 3: Create maps for criteria types
+	// Step 3: Create maps for criteria types and group scores by criteria
 	criteriaTypes := make(map[int]string)
+	scoreByCriteria := make(map[int][]float64)
+	productIDs := make(map[int]bool) // To track unique product IDs
+
 	for _, criterion := range criteriaList {
 		criteriaTypes[criterion.ID] = criterion.Type
 	}
 
-	// Step 4: Group normalized scores by criteria
-	scoreByCriteria := make(map[int][]float64)
 	for _, score := range scores {
 		scoreByCriteria[score.CriteriaID] = append(scoreByCriteria[score.CriteriaID], score.Score)
+		productIDs[score.ProductID] = true
 	}
 
-	// Step 5: Calculate ScoreOne based on normalized scores
-	for _, criteria := range criteriaList {
-		scoreValues := scoreByCriteria[criteria.ID]
-		if len(scoreValues) == 0 {
+	// Step 4: Calculate min and max for each criteria
+	criteriaMinMax := make(map[int]struct {
+		min float64
+		max float64
+	})
+
+	for criteriaID, scores := range scoreByCriteria {
+		if len(scores) == 0 {
 			continue
 		}
-
-		// Find min and max from normalized scores
-		minNorm := scoreValues[0]
-		maxNorm := scoreValues[0]
-		for _, value := range scoreValues {
-			if value < minNorm {
-				minNorm = value
+		min, max := scores[0], scores[0]
+		for _, score := range scores {
+			if score < min {
+				min = score
 			}
-			if value > maxNorm {
-				maxNorm = value
+			if score > max {
+				max = score
 			}
 		}
+		criteriaMinMax[criteriaID] = struct {
+			min float64
+			max float64
+		}{min, max}
+	}
 
-		// Calculate ScoreOne for each score based on criteria type
-		for _, score := range scores {
-			if score.CriteriaID == criteria.ID {
-				var scoreOne float64
-
-				if maxNorm != minNorm {
-					if criteriaTypes[criteria.ID] == "benefit" {
-						scoreOne = (score.Score - minNorm) / (maxNorm - minNorm)
-					} else if criteriaTypes[criteria.ID] == "cost" {
-						scoreOne = (maxNorm - score.Score) / (maxNorm - minNorm)
-					}
+	// Step 5: Process each product, then each criteria
+	for productID := range productIDs {
+		for _, criteria := range criteriaList {
+			var scoreValue float64
+			// Find the score for this product and criteria
+			for _, score := range scores {
+				if score.ProductID == productID && score.CriteriaID == criteria.ID {
+					scoreValue = score.Score
+					break
 				}
+			}
 
-				// Update score with ScoreOne value
-				score.ScoreOne = scoreOne
-				err = service.repository.UpdateScoreByMethodIDRepository(methodID, &score)
-				if err != nil {
-					response := map[string]string{"error": "gagal update score"}
-					helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-					return
+			minMax := criteriaMinMax[criteria.ID]
+			var scoreOne float64
+
+			if minMax.max != minMax.min {
+				if criteriaTypes[criteria.ID] == "benefit" {
+					scoreOne = (scoreValue - minMax.min) / (minMax.max - minMax.min)
+				} else if criteriaTypes[criteria.ID] == "cost" {
+					scoreOne = (minMax.max - scoreValue) / (minMax.max - minMax.min)
 				}
+			}
+
+			newScore := &Score{
+				ProductID:  productID,
+				CriteriaID: criteria.ID,
+				ScoreOne:   scoreOne,
+				ScoreTwo:   0,
+				MethodID:   methodID,
+			}
+
+			err = service.repository.CreateScoreRepository(newScore)
+			if err != nil {
+				response := map[string]string{"error": "gagal menghitung nilai utility"}
+				helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+				return
 			}
 		}
 	}
@@ -144,50 +208,75 @@ func (service *scoreService) NormalizeScoreMOORAService(ctx *gin.Context) {
 		return
 	}
 
-	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
+	scores, err := service.criteriaScoreRepository.GetAllCriteriaScoreRepository()
 	if err != nil {
 		response := map[string]string{"error": "gagal mengambil data score"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
-	// Kelompokkan score berdasarkan criteria
+	// Collect unique product IDs in a slice
+	productIDMap := make(map[int]bool)
+	for _, score := range scores {
+		productIDMap[score.ProductID] = true
+	}
+
+	// Convert map to sorted slice
+	var productIDs []int
+	for id := range productIDMap {
+		productIDs = append(productIDs, id)
+	}
+	// Sort product IDs
+	sort.Ints(productIDs)
+
+	// Group scores by criteria
 	scoreByCriteria := make(map[int][]float64)
 	for _, score := range scores {
 		scoreByCriteria[score.CriteriaID] = append(scoreByCriteria[score.CriteriaID], score.Score)
 	}
 
-	// Lakukan normalisasi untuk setiap kriteria
-	for _, criteria := range criteriaList {
-		scoreValues := scoreByCriteria[criteria.ID]
-		if len(scoreValues) == 0 {
-			continue
-		}
-
-		// Hitung akar dari jumlah kuadrat
+	// Calculate sqrt(sum of squares) for each criteria
+	criteriaSqrtSum := make(map[int]float64)
+	for criteriaID, scoreValues := range scoreByCriteria {
 		sumOfSquares := 0.0
 		for _, value := range scoreValues {
 			sumOfSquares += value * value
 		}
-		sqrtSum := math.Sqrt(sumOfSquares)
+		criteriaSqrtSum[criteriaID] = math.Sqrt(sumOfSquares)
+	}
 
-		// Normalisasi setiap score untuk kriteria ini menggunakan metode vector normalization
-		for _, score := range scores {
-			if score.CriteriaID == criteria.ID {
-				// Rumus normalisasi MOORA: rij = xij / sqrt(Σ(xij^2))
-				normalizedValue := 0.0
-				if sqrtSum != 0 {
-					normalizedValue = score.Score / sqrtSum
+	// Process each product in order, then each criteria
+	for _, productID := range productIDs {
+		for _, criteria := range criteriaList {
+			var scoreValue float64
+			// Find the score for this product and criteria
+			for _, score := range scores {
+				if score.ProductID == productID && score.CriteriaID == criteria.ID {
+					scoreValue = score.Score
+					break
 				}
+			}
 
-				// Update score dengan nilai yang sudah dinormalisasi
-				score.ScoreOne = normalizedValue
-				err = service.repository.UpdateScoreByMethodIDRepository(methodID, &score)
-				if err != nil {
-					response := map[string]string{"error": "gagal update score"}
-					helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-					return
-				}
+			// Calculate normalized value
+			normalizedValue := 0.0
+			sqrtSum := criteriaSqrtSum[criteria.ID]
+			if sqrtSum != 0 {
+				normalizedValue = scoreValue / sqrtSum
+			}
+
+			newScore := &Score{
+				ProductID:  productID,
+				CriteriaID: criteria.ID,
+				ScoreOne:   normalizedValue,
+				ScoreTwo:   0,
+				MethodID:   methodID,
+			}
+
+			err = service.repository.CreateScoreRepository(newScore)
+			if err != nil {
+				response := map[string]string{"error": "gagal menghitung nilai normalisasi MOORA"}
+				helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+				return
 			}
 		}
 	}

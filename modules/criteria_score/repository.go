@@ -31,12 +31,12 @@ func (r *criteriaScoreRepository) GetCriteriaScoreByIdRepository(criteriaScoreID
 }
 
 func (r *criteriaScoreRepository) CreateCriteriaScoreRepository(criteriaScore *CriteriaScore) (err error) {
-	err = r.DB.Create(&criteriaScore).Error
+	err = r.DB.Create(criteriaScore).Error
 	return err
 }
 
 func (r *criteriaScoreRepository) UpdateCriteriaScoreRepository(criteriaScore *CriteriaScore) (err error) {
-	err = r.DB.Save(&criteriaScore).Error
+	err = r.DB.Save(criteriaScore).Error
 	return err
 }
 

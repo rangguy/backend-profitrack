@@ -12,7 +12,6 @@ type Score struct {
 	ProductID  int               `gorm:"integer;not null" json:"product_id"`
 	CriteriaID int               `gorm:"integer;not null" json:"criteria_id"`
 	MethodID   int               `gorm:"integer;not null" json:"method_id"`
-	Score      float64           `gorm:"double" json:"score"`
 	ScoreOne   float64           `gorm:"double" json:"score_one"`
 	ScoreTwo   float64           `gorm:"double" json:"score_two"`
 	Product    product.Product   `gorm:"foreignkey:ProductID" json:"-"`
