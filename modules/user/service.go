@@ -79,7 +79,7 @@ func (service *userService) LoginService(ctx *gin.Context) {
 		Value:    token,
 		Path:     "/",
 		Expires:  expiredTime,
-		HttpOnly: true,
+		HttpOnly: false,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -93,7 +93,7 @@ func (service *userService) LogoutService(ctx *gin.Context) {
 		Name:     "token",
 		Path:     "/",
 		Value:    "",
-		HttpOnly: true,
+		HttpOnly: false,
 		MaxAge:   -1,
 	})
 
