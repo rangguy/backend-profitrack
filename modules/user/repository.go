@@ -9,6 +9,8 @@ import (
 
 type Repository interface {
 	LoginRepository(username string) (User, error)
+	GetUserByIDRepository(userID int) (User, error)
+	UpdateByIDRepository(user *User) (err error)
 }
 
 type userRepository struct {
@@ -46,4 +48,15 @@ func (r *userRepository) LoginRepository(username string) (User, error) {
 	var user User
 	err := r.DB.Where("username = ?", username).First(&user).Error
 	return user, err
+}
+
+func (r *userRepository) GetUserByIDRepository(userID int) (User, error) {
+	var user User
+	err := r.DB.Where("id = ?", userID).First(&user).Error
+	return user, err
+}
+
+func (r *userRepository) UpdateByIDRepository(user *User) (err error) {
+	err = r.DB.Save(user).Error
+	return err
 }

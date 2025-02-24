@@ -8,6 +8,7 @@ import (
 var JWT_KEY = []byte(os.Getenv("JWT_KEY"))
 
 type JWTClaim struct {
+	UserID   int
 	Username string
 	jwt.RegisteredClaims
 }
