@@ -24,9 +24,7 @@ type Service interface {
 	NormalizeScoreMOORAService(ctx *gin.Context)
 	CreateFinalScoresSMARTService(ctx *gin.Context)
 	CreateFinalScoresMOORAService(ctx *gin.Context)
-	CreateDeleteFinalScoreByMethodIDService(ctx *gin.Context)
-	DeleteAllScoresSMARTService(ctx *gin.Context)
-	DeleteAllScoresMOORAService(ctx *gin.Context)
+	CreateFinalScoreAndReportByMethodIDService(ctx *gin.Context)
 }
 
 type scoreService struct {
@@ -445,49 +443,7 @@ func (service *scoreService) CreateFinalScoresMOORAService(ctx *gin.Context) {
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
-func (service *scoreService) DeleteAllScoresSMARTService(ctx *gin.Context) {
-	methodID, err := strconv.Atoi(ctx.Param("methodID"))
-	if err != nil {
-		response := map[string]string{"error": "ID tidak sesuai"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	// Setelah menyimpan semua final score, baru hapus data score
-	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
-	if err != nil {
-		response := map[string]string{"error": "gagal menghapus semua data nilai"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-		return
-	}
-
-	response := map[string]string{"message": "perhitungan final score dan penghapusan data nilai berhasil"}
-	helpers.ResponseJSON(ctx, http.StatusOK, response)
-}
-
-func (service *scoreService) DeleteAllScoresMOORAService(ctx *gin.Context) {
-	methodID, err := strconv.Atoi(ctx.Param("methodID"))
-	if err != nil {
-		response := map[string]string{"error": "ID tidak sesuai"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	//Setelah menyimpan semua final score, baru hapus data score
-	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
-	if err != nil {
-		response := map[string]string{"error": "gagal menghapus semua data nilai"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-		return
-	}
-
-	response := map[string]string{"message": "perhitungan final score dan penghapusan data nilai berhasil"}
-	helpers.ResponseJSON(ctx, http.StatusOK, response)
-}
-
-func (service *scoreService) CreateDeleteFinalScoreByMethodIDService(ctx *gin.Context) {
-	var reportFinalScores report.Report
-
+func (service *scoreService) CreateFinalScoreAndReportByMethodIDService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}
@@ -509,23 +465,37 @@ func (service *scoreService) CreateDeleteFinalScoreByMethodIDService(ctx *gin.Co
 		return
 	}
 
-	// Iterate over final scores and create report entries
-	for _, score := range finalScores {
-		// Extract month and year from CreatedAt
-		year, month, _ := score.CreatedAt.Date()
-		period := fmt.Sprintf("%s %d", month.String(), year) // e.g., "January 2023"
+	// Buat entri laporan utama dahulu
+	newReport := report.Report{
+		MethodID:  methodID,
+		TotalData: len(finalScores),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
 
-		// Create a new report entry
-		reportFinalScores = report.Report{
+	// Simpan laporan utama ke database
+	err = service.repository.CreateReportFinalScoreByMethodIDRepository(&newReport)
+	if err != nil {
+		response := map[string]string{"error": "gagal membuat laporan utama"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	// Iterate over final scores and create report detail entries
+	for _, score := range finalScores {
+		// Create a new report detail entry
+		reportDetail := report.ReportDetail{
+			MethodID:   methodID,
 			ProductID:  score.ProductID,
-			MethodID:   score.MethodID,
+			ReportID:   newReport.ID,
 			FinalScore: score.FinalScore,
-			Period:     period,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 
-		err = service.repository.CreateReportFinalScoreByMethodIDRepository(&reportFinalScores)
+		err = service.repository.CreateReportDetailRepository(&reportDetail)
 		if err != nil {
-			response := map[string]string{"error": "gagal memasukkan nilai ke dalam laporan"}
+			response := map[string]string{"error": "gagal memasukkan nilai ke dalam detail laporan"}
 			helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 			return
 		}
@@ -533,18 +503,18 @@ func (service *scoreService) CreateDeleteFinalScoreByMethodIDService(ctx *gin.Co
 
 	err = service.repository.DeleteAllScoresByMethodIDRepository(methodID)
 	if err != nil {
-		response := map[string]string{"error": "gagal menghapus detail nilai"}
+		response := map[string]string{"error": "gagal menghapus semua data nilai"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
 	err = service.repository.DeleteFinalScoreByMethodIDRepository(methodID)
 	if err != nil {
-		response := map[string]string{"error": "gagal menghapus nilai akhir"}
+		response := map[string]string{"error": "gagal menghapus semua data nilai akhir"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
-	response := map[string]string{"message": "Berhasil menghapus nilai dan memasukkan ke dalam laporan"}
+	response := map[string]string{"message": "Berhasil membuat laporan dan memasukkan data ke detail laporan"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }

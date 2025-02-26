@@ -26,13 +26,11 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	api.GET("/scores/:methodID", service.GetAllScoreByMethodIDService)
 
 	//SMART
-	api.PUT("/scores/:methodID/SMART", service.UtilityScoreSMARTService, service.ScoreOneTimesWeightByMethodIDService, service.CreateFinalScoresSMARTService)
-	api.DELETE("/scores/:methodID/SMART", service.DeleteAllScoresSMARTService)
+	api.POST("/scores/:methodID/SMART", service.UtilityScoreSMARTService, service.ScoreOneTimesWeightByMethodIDService, service.CreateFinalScoresSMARTService)
 
 	//MOORA
-	api.PUT("/scores/:methodID/MOORA", service.NormalizeScoreMOORAService, service.ScoreOneTimesWeightByMethodIDService, service.CreateFinalScoresMOORAService)
-	api.DELETE("/scores/:methodID/MOORA", service.DeleteAllScoresMOORAService)
+	api.POST("/scores/:methodID/MOORA", service.NormalizeScoreMOORAService, service.ScoreOneTimesWeightByMethodIDService, service.CreateFinalScoresMOORAService)
 
-	// Delete Final Score And Create Report
-	api.DELETE("/final_scores/:methodID", service.CreateDeleteFinalScoreByMethodIDService)
+	// Create Final Scores and Report
+	api.POST("/final_scores/:methodID", service.CreateFinalScoreAndReportByMethodIDService)
 }
