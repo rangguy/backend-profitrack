@@ -15,7 +15,7 @@ import (
 
 func Migrations(db *gorm.DB) {
 	var err error
-	//err = db.Migrator().DropTable(&criteria.Criteria{}, &method.Method{}, &criteria_score.CriteriaScore{}, &score.Score{}, &final_score.FinalScore{}, &report.Report{})
+	//err = db.Migrator().DropTable(&report.Report{}, &report.ReportDetail{})
 	//if err != nil {
 	//	panic(err)
 	//}

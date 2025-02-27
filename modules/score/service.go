@@ -467,10 +467,11 @@ func (service *scoreService) CreateFinalScoreAndReportByMethodIDService(ctx *gin
 
 	// Buat entri laporan utama dahulu
 	newReport := report.Report{
-		MethodID:  methodID,
-		TotalData: len(finalScores),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ReportCode: fmt.Sprintf("LAP-%d-%d", methodID, time.Now().Unix()),
+		MethodID:   methodID,
+		TotalData:  len(finalScores),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	// Simpan laporan utama ke database

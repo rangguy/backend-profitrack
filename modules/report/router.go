@@ -13,7 +13,8 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	api := router.Group("/api")
 	api.Use(middleware.LoggingMiddleware())
 	api.Use(middleware.JWTMiddleware())
-	api.POST("/reports", service.GetAllReportService)
+	api.GET("/reports", service.GetAllReportsService)
+	api.GET("/reports/:id", service.GetDetailReportService)
 	//api.POST("/reports/export/:methodID", service.ExportExcelService)
-	api.DELETE("/reports/:methodID", service.DeleteAllReportService)
+	api.DELETE("/reports/:id", service.DeleteDetailReportService, service.DeleteAllReportService)
 }

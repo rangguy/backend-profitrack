@@ -4,8 +4,10 @@ import "gorm.io/gorm"
 
 type Repository interface {
 	GetAllReportsRepository() (result []Report, err error)
-	GetAllReportDetailRepository(methodID int, period string) (result []Report, err error)
-	DeleteAllReportRepository(methodID int, period string) (err error)
+	GetReportByIDRepository(ID int) (result Report, err error)
+	GetAllReportDetailRepository(ID int) (result []ReportDetail, err error)
+	DeleteReportRepository(report *Report) (err error)
+	DeleteDetailReportRepository(reportID int) (err error)
 }
 
 type newReportRepository struct {
@@ -21,12 +23,22 @@ func (r *newReportRepository) GetAllReportsRepository() (result []Report, err er
 	return
 }
 
-func (r *newReportRepository) GetAllReportDetailRepository(methodID int, period string) (result []Report, err error) {
-	err = r.DB.Preload("Product").Where("method_id = ? AND period = ?", methodID, period).Find(&result).Error
+func (r *newReportRepository) GetReportByIDRepository(ID int) (result Report, err error) {
+	err = r.DB.First(&result, "id = ?", ID).Error
+	return result, nil
+}
+
+func (r *newReportRepository) GetAllReportDetailRepository(ID int) (result []ReportDetail, err error) {
+	err = r.DB.Preload("Product").Where("report_id = ?", ID).Find(&result).Error
 	return result, err
 }
 
-func (r *newReportRepository) DeleteAllReportRepository(methodID int, period string) (err error) {
-	err = r.DB.Where("method_id = ? AND period = ?", methodID, period).Delete(&Report{}).Error
+func (r *newReportRepository) DeleteReportRepository(report *Report) (err error) {
+	err = r.DB.Delete(report).Error
+	return err
+}
+
+func (r *newReportRepository) DeleteDetailReportRepository(reportID int) (err error) {
+	err = r.DB.Where("report_id = ?", reportID).Delete(&ReportDetail{}).Error
 	return err
 }

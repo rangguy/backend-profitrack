@@ -8,8 +8,10 @@ import (
 )
 
 type Service interface {
-	GetAllReportService(ctx *gin.Context)
+	GetAllReportsService(ctx *gin.Context)
+	GetDetailReportService(ctx *gin.Context)
 	//ExportExcelService(ctx *gin.Context)
+	DeleteDetailReportService(ctx *gin.Context)
 	DeleteAllReportService(ctx *gin.Context)
 }
 
@@ -21,31 +23,46 @@ func NewReportService(repo Repository) Service {
 	return &reportService{repository: repo}
 }
 
-func (service *reportService) GetAllReportService(ctx *gin.Context) {
-	// Parse methodID from the URL parameter
-	methodID, err := strconv.Atoi(ctx.Param("methodID"))
-	if err != nil {
-		response := map[string]string{"error": "Invalid method ID"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	period := ctx.PostForm("period")
-	if period == "" {
-		response := map[string]string{"error": "Period is required"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
+func (service *reportService) GetAllReportsService(ctx *gin.Context) {
 	// Retrieve reports from the repository
-	reports, err := service.repository.GetAllReportRepository(methodID, period)
+	reports, err := service.repository.GetAllReportsRepository()
 	if err != nil {
 		response := map[string]string{"error": "Failed to retrieve reports"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
+	if len(reports) == 0 {
+		response := map[string]string{"error": "data laporan masih kosong"}
+		helpers.ResponseJSON(ctx, http.StatusNotFound, response)
+		return
+	}
+
 	// Respond with the retrieved reports
+	helpers.ResponseJSON(ctx, http.StatusOK, reports)
+}
+
+func (service *reportService) GetDetailReportService(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		response := map[string]string{"error": "Invalid id"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	reports, err := service.repository.GetAllReportDetailRepository(id)
+	if err != nil {
+		response := map[string]string{"error": "gagal mendapatkan detail laporan"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	if len(reports) == 0 {
+		response := map[string]string{"error": "data laporan masih kosong"}
+		helpers.ResponseJSON(ctx, http.StatusNotFound, response)
+		return
+	}
+
 	helpers.ResponseJSON(ctx, http.StatusOK, reports)
 }
 
@@ -122,28 +139,56 @@ func (service *reportService) GetAllReportService(ctx *gin.Context) {
 //	}
 //}
 
-func (service *reportService) DeleteAllReportService(ctx *gin.Context) {
-	methodID, err := strconv.Atoi(ctx.Param("methodID"))
+func (service *reportService) DeleteDetailReportService(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		response := map[string]string{"error": "Invalid method ID"}
+		response := map[string]string{"error": "Invalid ID"}
 		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 		return
 	}
 
-	period := ctx.PostForm("period")
-	if period == "" {
-		response := map[string]string{"error": "Period is required"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	err = service.repository.DeleteAllReportRepository(methodID, period)
+	_, err = service.repository.GetAllReportDetailRepository(id)
 	if err != nil {
-		response := map[string]string{"error": "gagal menghapus nilai laporan"}
+		response := map[string]string{"error": "gagal mendapatkan detail laporan"}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
-	response := map[string]string{"message": "berhasil menghapus nilai laporan"}
+	// menghapus berdasarkan report id
+	err = service.repository.DeleteDetailReportRepository(id)
+	if err != nil {
+		response := map[string]string{"error": "gagal menghapus detail laporan"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]string{"message": "berhasil menghapus detail laporan"}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
+
+}
+
+func (service *reportService) DeleteAllReportService(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		response := map[string]string{"error": "Invalid ID"}
+		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
+		return
+	}
+
+	report, err := service.repository.GetReportByIDRepository(id)
+	if err != nil {
+		response := map[string]string{"error": "gagal mendapatkan laporan"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	err = service.repository.DeleteReportRepository(&report)
+	if err != nil {
+		response := map[string]string{"error": "gagal menghapus laporan"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]string{"message": "berhasil menghapus laporan"}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
