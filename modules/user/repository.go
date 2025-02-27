@@ -8,6 +8,7 @@ import (
 )
 
 type Repository interface {
+	CountUserRepository() (total int64, err error)
 	LoginRepository(username string) (User, error)
 	GetUserByIDRepository(userID int) (User, error)
 	UpdateByIDRepository(user *User) (err error)
@@ -59,4 +60,9 @@ func (r *userRepository) GetUserByIDRepository(userID int) (User, error) {
 func (r *userRepository) UpdateByIDRepository(user *User) (err error) {
 	err = r.DB.Save(user).Error
 	return err
+}
+
+func (r *userRepository) CountUserRepository() (total int64, err error) {
+	err = r.DB.Model(&User{}).Count(&total).Error
+	return total, err
 }

@@ -13,6 +13,7 @@ import (
 )
 
 type Service interface {
+	CountCriteriaService(ctx *gin.Context)
 	CreateCriteriaService(ctx *gin.Context)
 	GetAllCriteriaService(ctx *gin.Context)
 	GetCriteriaByIdService(ctx *gin.Context)
@@ -28,6 +29,18 @@ func NewCriteriaService(repo Repository) Service {
 	return &criteriaService{
 		repository: repo,
 	}
+}
+
+func (service *criteriaService) CountCriteriaService(ctx *gin.Context) {
+	result, err := service.repository.CountCriteriaRepository()
+	if err != nil {
+		response := map[string]string{"error": "gagal menghitung jumlah data kriteria"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]int{"count": int(result)}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
 func (service *criteriaService) GetAllCriteriaService(ctx *gin.Context) {

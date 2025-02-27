@@ -17,6 +17,7 @@ type Service interface {
 	LoginService(ctx *gin.Context)
 	LogoutService(ctx *gin.Context)
 	UpdatePasswordService(ctx *gin.Context)
+	CountUserService(ctx *gin.Context)
 }
 
 type userService struct {
@@ -27,6 +28,18 @@ func NewUserService(repository Repository) Service {
 	return &userService{
 		repository,
 	}
+}
+
+func (service *userService) CountUserService(ctx *gin.Context) {
+	result, err := service.repository.CountUserRepository()
+	if err != nil {
+		response := map[string]string{"error": "gagal menghitung jumlah data user"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]int{"count": int(result)}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
 func (service *userService) LoginService(ctx *gin.Context) {

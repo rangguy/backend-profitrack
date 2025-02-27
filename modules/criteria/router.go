@@ -13,6 +13,7 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	api := router.Group("/api")
 	api.Use(middleware.LoggingMiddleware())
 	api.Use(middleware.JWTMiddleware())
+	api.GET("/criterias/count", service.CountCriteriaService)
 	api.GET("/criterias", service.GetAllCriteriaService)
 	api.GET("/criterias/:id", service.GetCriteriaByIdService)
 	api.POST("/criterias", service.CreateCriteriaService)

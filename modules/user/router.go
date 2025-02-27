@@ -17,4 +17,5 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	api.Use(middleware.LoggingMiddleware())
 	api.Use(middleware.JWTMiddleware())
 	api.PUT("/user", service.UpdatePasswordService)
+	api.GET("/user/count", service.CountUserService)
 }

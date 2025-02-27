@@ -3,6 +3,7 @@ package report
 import "gorm.io/gorm"
 
 type Repository interface {
+	CountReportsRepository() (total int64, err error)
 	GetAllReportsRepository() (result []Report, err error)
 	GetReportByIDRepository(ID int) (result Report, err error)
 	GetAllReportDetailRepository(ID int) (result []ReportDetail, err error)
@@ -10,35 +11,40 @@ type Repository interface {
 	DeleteDetailReportRepository(reportID int) (err error)
 }
 
-type newReportRepository struct {
+type reportRepository struct {
 	DB *gorm.DB
 }
 
 func NewReportRepository(db *gorm.DB) Repository {
-	return &newReportRepository{db}
+	return &reportRepository{db}
 }
 
-func (r *newReportRepository) GetAllReportsRepository() (result []Report, err error) {
+func (r *reportRepository) CountReportsRepository() (total int64, err error) {
+	err = r.DB.Model(&Report{}).Count(&total).Error
+	return total, err
+}
+
+func (r *reportRepository) GetAllReportsRepository() (result []Report, err error) {
 	err = r.DB.Find(&result).Error
 	return
 }
 
-func (r *newReportRepository) GetReportByIDRepository(ID int) (result Report, err error) {
+func (r *reportRepository) GetReportByIDRepository(ID int) (result Report, err error) {
 	err = r.DB.First(&result, "id = ?", ID).Error
 	return result, nil
 }
 
-func (r *newReportRepository) GetAllReportDetailRepository(ID int) (result []ReportDetail, err error) {
+func (r *reportRepository) GetAllReportDetailRepository(ID int) (result []ReportDetail, err error) {
 	err = r.DB.Preload("Product").Where("report_id = ?", ID).Find(&result).Error
 	return result, err
 }
 
-func (r *newReportRepository) DeleteReportRepository(report *Report) (err error) {
+func (r *reportRepository) DeleteReportRepository(report *Report) (err error) {
 	err = r.DB.Delete(report).Error
 	return err
 }
 
-func (r *newReportRepository) DeleteDetailReportRepository(reportID int) (err error) {
+func (r *reportRepository) DeleteDetailReportRepository(reportID int) (err error) {
 	err = r.DB.Where("report_id = ?", reportID).Delete(&ReportDetail{}).Error
 	return err
 }

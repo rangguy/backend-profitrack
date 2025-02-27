@@ -5,6 +5,7 @@ import (
 )
 
 type Repository interface {
+	CountProductsRepository() (total int64, err error)
 	GetAllProductRepository() (result []Product, err error)
 	CreateProductRepository(product *Product) (err error)
 	GetProductByIdRepository(productID int) (product Product, err error)
@@ -21,6 +22,11 @@ func NewProductRepository(db *gorm.DB) Repository {
 	return &productRepository{
 		DB: db,
 	}
+}
+
+func (r *productRepository) CountProductsRepository() (total int64, err error) {
+	err = r.DB.Model(&Product{}).Count(&total).Error
+	return total, err
 }
 
 func (r *productRepository) BulkCreateProductRepository(products []Product) error {

@@ -16,6 +16,7 @@ import (
 )
 
 type Service interface {
+	CountProductsService(ctx *gin.Context)
 	CreateProductService(ctx *gin.Context)
 	GetAllProductService(ctx *gin.Context)
 	GetProductByIdService(ctx *gin.Context)
@@ -33,6 +34,18 @@ func NewProductService(repo Repository) Service {
 	return &productService{
 		repository: repo,
 	}
+}
+
+func (service *productService) CountProductsService(ctx *gin.Context) {
+	result, err := service.repository.CountProductsRepository()
+	if err != nil {
+		response := map[string]string{"error": "gagal menghitung jumlah data produk"}
+		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
+		return
+	}
+
+	response := map[string]int{"count": int(result)}
+	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
 func (service *productService) GetAllProductService(ctx *gin.Context) {

@@ -5,6 +5,7 @@ import (
 )
 
 type Repository interface {
+	CountCriteriaRepository() (total int64, err error)
 	GetAllCriteriaRepository() (result []Criteria, err error)
 	CreateCriteriaRepository(criteria *Criteria) (err error)
 	GetCriteriaByIdRepository(criteriaID int) (criteria Criteria, err error)
@@ -20,6 +21,11 @@ func NewCriteriaRepository(db *gorm.DB) Repository {
 	return &criteriaRepository{
 		DB: db,
 	}
+}
+
+func (r *criteriaRepository) CountCriteriaRepository() (total int64, err error) {
+	err = r.DB.Model(&Criteria{}).Count(&total).Error
+	return total, err
 }
 
 func (r *criteriaRepository) GetAllCriteriaRepository() (result []Criteria, err error) {
