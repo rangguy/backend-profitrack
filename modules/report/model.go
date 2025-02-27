@@ -23,7 +23,7 @@ type ReportDetail struct {
 	ReportID   int             `gorm:"integer;not null" json:"report_id"`
 	FinalScore float64         `gorm:"double" json:"final_scores"`
 	Method     method.Method   `gorm:"foreignkey:MethodID" json:"-"`
-	Product    product.Product `gorm:"foreignkey:ProductID" json:"-"`
+	Product    product.Product `gorm:"foreignkey:ProductID" json:"product"`
 	Report     Report          `gorm:"foreignkey:ReportID" json:"-"`
 	CreatedAt  time.Time       `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt  time.Time       `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
