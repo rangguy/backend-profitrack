@@ -104,8 +104,8 @@ func (service *productService) CreateProductService(ctx *gin.Context) {
 
 	err := service.repository.CreateProductRepository(&newProduct)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key score violates unique constraint \"uni_products_name\"") {
-			response = map[string]string{"message": "nama produk sudah ada"}
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_products_name\"") {
+			response = map[string]string{"error": "nama produk sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
 		}
@@ -380,7 +380,7 @@ func (service *productService) ImportExcelService(ctx *gin.Context) {
 
 	// Bulk insert
 	if err = service.repository.BulkCreateProductRepository(products); err != nil {
-		if strings.Contains(err.Error(), "duplicate key score violates unique constraint") {
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, gin.H{"error": "Beberapa produk sudah ada (duplikat nama produk)"})
 			return
 		}

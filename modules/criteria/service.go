@@ -87,7 +87,7 @@ func (service *criteriaService) CreateCriteriaService(ctx *gin.Context) {
 
 	err := service.repository.CreateCriteriaRepository(&newCriteria)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key score violates unique constraint \"uni_criteria_name\"") {
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_criteria_name\"") {
 			response := map[string]string{"error": "Nama kriteria sudah ada"}
 			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
 			return
@@ -97,7 +97,7 @@ func (service *criteriaService) CreateCriteriaService(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, newCriteria)
+	helpers.ResponseJSON(ctx, http.StatusCreated, newCriteria)
 }
 
 func (service *criteriaService) GetCriteriaByIdService(ctx *gin.Context) {
@@ -125,7 +125,7 @@ func (service *criteriaService) GetCriteriaByIdService(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, criteria)
+	helpers.ResponseJSON(ctx, http.StatusOK, criteria)
 }
 
 func (service *criteriaService) UpdateCriteriaService(ctx *gin.Context) {
