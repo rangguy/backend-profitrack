@@ -2,6 +2,8 @@ package criteria
 
 import (
 	"gorm.io/gorm"
+	"log"
+	"time"
 )
 
 type Repository interface {
@@ -18,6 +20,40 @@ type criteriaRepository struct {
 }
 
 func NewCriteriaRepository(db *gorm.DB) Repository {
+	var count int64
+	db.Model(&Criteria{}).Count(&count)
+
+	if count == 0 {
+		criteriaList := []Criteria{
+			{
+				Name:      "Return On Investment",
+				Type:      "Benefit",
+				Weight:    0.3,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			{
+				Name:      "Net Profit Margin",
+				Type:      "Benefit",
+				Weight:    0.4,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			{
+				Name:      "Rasio Efisiensi",
+				Type:      "Cost",
+				Weight:    0.3,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+		}
+
+		db.Create(&criteriaList)
+		log.Println("Criteria created.")
+	} else {
+		log.Println("Criteria already exists.")
+	}
+
 	return &criteriaRepository{
 		DB: db,
 	}
