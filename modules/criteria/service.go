@@ -8,13 +8,11 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
 type Service interface {
 	CountCriteriaService(ctx *gin.Context)
-	CreateCriteriaService(ctx *gin.Context)
 	GetAllCriteriaService(ctx *gin.Context)
 	GetCriteriaByIdService(ctx *gin.Context)
 	UpdateCriteriaService(ctx *gin.Context)
@@ -67,37 +65,6 @@ func (service *criteriaService) GetAllCriteriaService(ctx *gin.Context) {
 	} else {
 		helpers.ResponseJSON(ctx, http.StatusOK, result)
 	}
-}
-
-func (service *criteriaService) CreateCriteriaService(ctx *gin.Context) {
-	var newCriteria Criteria
-	if err := ctx.ShouldBindJSON(&newCriteria); err != nil {
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	if newCriteria.Name == "" || newCriteria.Weight == 0 || newCriteria.Type == "" {
-		response := map[string]string{"error": "inputan tidak valid"}
-		helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-		return
-	}
-
-	newCriteria.CreatedAt = time.Now()
-	newCriteria.UpdatedAt = time.Now()
-
-	err := service.repository.CreateCriteriaRepository(&newCriteria)
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint \"uni_criteria_name\"") {
-			response := map[string]string{"error": "Nama kriteria sudah ada"}
-			helpers.ResponseJSON(ctx, http.StatusBadRequest, response)
-			return
-		}
-		response := map[string]string{"error": "gagal menambahkan data kriteria"}
-		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
-		return
-	}
-
-	helpers.ResponseJSON(ctx, http.StatusCreated, newCriteria)
 }
 
 func (service *criteriaService) GetCriteriaByIdService(ctx *gin.Context) {

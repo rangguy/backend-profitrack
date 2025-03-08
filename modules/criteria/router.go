@@ -16,7 +16,6 @@ func Initiator(router *gin.Engine, db *gorm.DB) {
 	api.GET("/criterias/count", service.CountCriteriaService)
 	api.GET("/criterias", service.GetAllCriteriaService)
 	api.GET("/criterias/:id", service.GetCriteriaByIdService)
-	api.POST("/criterias", service.CreateCriteriaService)
 	api.PUT("/criterias/:id", service.UpdateCriteriaService)
 	api.DELETE("/criterias/:id", service.DeleteCriteriaService)
 }
