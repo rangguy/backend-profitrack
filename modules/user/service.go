@@ -54,17 +54,17 @@ func (service *userService) LoginService(ctx *gin.Context) {
 	user, err := service.repository.LoginRepository(userRequest.Username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			response := map[string]string{"message": "Username atau password salah"}
+			response := map[string]string{"error": "Username atau password salah"}
 			helpers.ResponseJSON(ctx, http.StatusUnauthorized, response)
 			return
 		}
-		response := map[string]string{"message": err.Error()}
+		response := map[string]string{"error": err.Error()}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userRequest.Password)); err != nil {
-		response := map[string]string{"message": "Username atau password salah"}
+		response := map[string]string{"error": "Username atau password salah"}
 		helpers.ResponseJSON(ctx, http.StatusUnauthorized, response)
 		return
 	}
@@ -82,7 +82,7 @@ func (service *userService) LoginService(ctx *gin.Context) {
 	tokenAlgo := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token, err := tokenAlgo.SignedString(config.JWT_KEY)
 	if err != nil {
-		response := map[string]string{"message": err.Error()}
+		response := map[string]string{"error": err.Error()}
 		helpers.ResponseJSON(ctx, http.StatusInternalServerError, response)
 		return
 	}
