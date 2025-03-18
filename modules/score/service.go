@@ -326,9 +326,9 @@ func (service *scoreService) utilityScoreSMART(methodID int) error {
 				var scoreOne float64
 
 				if maxNorm != minNorm {
-					if criteriaTypes[criteria.ID] == "benefit" {
+					if strings.EqualFold(criteriaTypes[criteria.ID], "Benefit") {
 						scoreOne = (score.Score - minNorm) / (maxNorm - minNorm)
-					} else if criteriaTypes[criteria.ID] == "cost" {
+					} else if strings.EqualFold(criteriaTypes[criteria.ID], "Cost") {
 						scoreOne = (maxNorm - score.Score) / (maxNorm - minNorm)
 					}
 				}
@@ -545,9 +545,9 @@ func (service *scoreService) createFinalScoresMOORA(methodID int) error {
 		}
 
 		// ScoreTwo sudah merupakan weighted normalized value
-		if strings.EqualFold(criteriaTypes[score.CriteriaID], "benefit") {
+		if strings.EqualFold(criteriaTypes[score.CriteriaID], "Benefit") {
 			productScores[score.ProductID].benefitSum += score.ScoreTwo
-		} else if strings.EqualFold(criteriaTypes[score.CriteriaID], "cost") {
+		} else if strings.EqualFold(criteriaTypes[score.CriteriaID], "Cost") {
 			productScores[score.ProductID].costSum += score.ScoreTwo
 		}
 	}
