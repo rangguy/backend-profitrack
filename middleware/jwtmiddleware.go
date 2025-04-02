@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-var mySigningKey = config.JWT_KEY
-
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Ambil token dari Authorization Header
