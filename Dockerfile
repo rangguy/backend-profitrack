@@ -1,18 +1,54 @@
-FROM golang:1.23-alpine
+# Stage 1: Build the application
+FROM golang:1.23-alpine AS builder
 
+# Set environment variables
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+# Set working directory
 WORKDIR /app
 
-# Copy go.mod and go.sum first
-COPY go.mod go.sum ./
-
-# Now download dependencies
-RUN go mod download
-
-# Then copy the rest of the code
+# Copy the source code
 COPY . .
 
-RUN go build -o main main.go
+# Download dependencies
+RUN go mod download
 
-EXPOSE 8080
+# Build the application
+RUN go build -o api-profitrack-local .
 
-CMD ["./main"]
+# Stage 2: Create the production image
+FROM alpine:latest
+
+# Install tzdata for timezone support
+RUN apk add --no-cache tzdata
+
+# Set the timezone environment variable (can be overridden by .env)
+ENV TZ=Asia/Jakarta
+
+# Configure the timezone
+RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Set working directory
+WORKDIR /app
+
+# Create user and group for application
+#
+# Create a group with GID 1001
+RUN addgroup -g 1001 binarygroup
+# Create a user with UID 1001 and assign them to the 'binarygroup' group
+RUN adduser -D -u 1001 -G binarygroup userapp
+
+# Copy the binary from the builder stage
+COPY --from=builder --chown=userapp:binarygroup /app/api-profitrack-local .
+
+# Switch to the userapp user
+USER userapp
+
+# Expose port 8080
+EXPOSE 8083
+
+# Command to run the application
+CMD ["./api-profitrack-local"]

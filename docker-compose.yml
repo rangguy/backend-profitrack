@@ -1,24 +1,58 @@
-# docker-compose.yml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-    environment:
-      - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASSWORD=postgresql
-      - DB_NAME=profitrack
-      - DB_PORT=5432
+version: "3.8"
 
-  db:
-    image: postgres:15
+services:
+  # PostgreSQL Service
+  postgresql-profitrack:
+    image: postgres:latest
+    container_name: postgresql-profitrack
+    restart: on-failure
+    env_file:
+      - .env
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgresql
-      - POSTGRES_DB=profitrack
+      - POSTGRES_DB=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+#    ports:
+#      - "5432:5432"
+    volumes:
+      - postgresql-profitrack-data:/var/lib/postgresql/data
+    networks:
+      - profitrack-network-database
+
+  # API Contact Form Service
+  api-profitrack:
+    build: .
+    image: api-profitrack:1.0.0
+    container_name: api-profitrack
+    restart: on-failure
+    depends_on:
+      - postgresql-profitrack
+    env_file:
+      - .env
     ports:
-      - "5432:5432"
+      - "${HOST_API_PORT}:${CONT_API_PORT}"
+    environment:
+      - APP_PORT=${CONT_API_PORT}
+      - APP_TIMEZONE=Asia/Jakarta
+      - DB_HOST=postgresql-profitrack
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DATABASE}
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000
+      - CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
+      - CORS_ALLOWED_HEADERS=Origin,Content-Type,Accept,Authorization
+      - CORS_ALLOW_CREDENTIALS=true
+      - CORS_EXPOSE_HEADERS=Content-Length,Content-Type
+    volumes:
+      - ./uploads:/app/uploads
+      - ./temp:/app/temp
+    networks:
+      - profitrack-network-database
+
+volumes:
+  postgresql-profitrack-data:
+
+networks:
+  profitrack-network-database:
+    driver: bridge

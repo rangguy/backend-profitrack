@@ -97,7 +97,10 @@ func (service *userService) LoginService(ctx *gin.Context) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	response := map[string]string{"message": "login berhasil"}
+	response := map[string]interface{}{
+		"message": "login berhasil",
+		"token":   token,
+	}
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
