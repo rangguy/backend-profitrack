@@ -48,7 +48,7 @@ COPY --from=builder --chown=userapp:binarygroup /app/api-profitrack-local .
 USER userapp
 
 # Expose port 8080
-EXPOSE 8083
+EXPOSE 8080
 
 # Command to run the application
 CMD ["./api-profitrack-local"]
