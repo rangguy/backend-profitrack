@@ -52,7 +52,6 @@ func (service *scoreService) GetAllScoreByMethodIDService(ctx *gin.Context) {
 		return
 	}
 
-	// Step 1: Retrieve all scores for the given methodID
 	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
 	if err != nil {
 		response := map[string]string{"error": "gagal mengambil data score"}
@@ -60,7 +59,6 @@ func (service *scoreService) GetAllScoreByMethodIDService(ctx *gin.Context) {
 		return
 	}
 
-	// Step 2: Format response data
 	var result []Score
 	for _, score := range scores {
 		result = append(result, Score{
@@ -94,7 +92,7 @@ func (service *scoreService) CalculateSMARTService(ctx *gin.Context) {
 
 	startTime := time.Now()
 
-	// Lakukan perhitungan utility score
+	// perhitungan utility score
 	err = service.utilityScoreSMART(methodID)
 	if err != nil {
 		response := map[string]interface{}{
@@ -105,7 +103,7 @@ func (service *scoreService) CalculateSMARTService(ctx *gin.Context) {
 		return
 	}
 
-	// Lakukan perhitungan score times weight
+	// perhitungan score times weight
 	err = service.scoreOneTimesWeightByMethodID(methodID)
 	if err != nil {
 		response := map[string]interface{}{
@@ -116,7 +114,7 @@ func (service *scoreService) CalculateSMARTService(ctx *gin.Context) {
 		return
 	}
 
-	// Lakukan perhitungan final score
+	// perhitungan final score
 	err = service.createFinalScoresSMART(methodID)
 	if err != nil {
 		response := map[string]interface{}{
@@ -127,11 +125,10 @@ func (service *scoreService) CalculateSMARTService(ctx *gin.Context) {
 		return
 	}
 
-	// Hitung selisih waktu
+	// Menghitung selisih waktu
 	endTime := time.Now()
 	processingTime := endTime.Sub(startTime)
 
-	// Kirim response dengan waktu proses
 	response := map[string]interface{}{
 		"message":        "Normalisasi nilai utility, utility x bobot, dan perhitungan skor akhir SMART berhasil",
 		"processingTime": processingTime.String(),
@@ -139,7 +136,7 @@ func (service *scoreService) CalculateSMARTService(ctx *gin.Context) {
 	helpers.ResponseJSON(ctx, http.StatusOK, response)
 }
 
-// CalculateMOORAService - Public endpoint untuk perhitungan MOORA
+// CalculateMOORAService
 func (service *scoreService) CalculateMOORAService(ctx *gin.Context) {
 	methodID, err := strconv.Atoi(ctx.Param("methodID"))
 	if err != nil {
@@ -150,7 +147,7 @@ func (service *scoreService) CalculateMOORAService(ctx *gin.Context) {
 
 	startTime := time.Now()
 
-	// Lakukan normalisasi score MOORA
+	// normalisasi score MOORA
 	err = service.normalizeScoreMOORA(methodID)
 	if err != nil {
 		response := map[string]interface{}{
@@ -161,7 +158,7 @@ func (service *scoreService) CalculateMOORAService(ctx *gin.Context) {
 		return
 	}
 
-	// Lakukan perhitungan score times weight
+	// perhitungan score times weight
 	err = service.scoreOneTimesWeightByMethodID(methodID)
 	if err != nil {
 		response := map[string]interface{}{
@@ -172,7 +169,7 @@ func (service *scoreService) CalculateMOORAService(ctx *gin.Context) {
 		return
 	}
 
-	// Lakukan perhitungan final score
+	// Menghitung final score
 	err = service.createFinalScoresMOORA(methodID)
 	if err != nil {
 		response := map[string]interface{}{
@@ -183,7 +180,7 @@ func (service *scoreService) CalculateMOORAService(ctx *gin.Context) {
 		return
 	}
 
-	// Hitung selisih waktu
+	// Menghitung selisih waktu
 	endTime := time.Now()
 	processingTime := endTime.Sub(startTime)
 
@@ -203,7 +200,7 @@ func (service *scoreService) CreateReportByMethodIDService(ctx *gin.Context) {
 		return
 	}
 
-	// Retrieve all final scores by method ID
+	// Mendapatkan data final score by method id
 	finalScores, err := service.finalScoreRepository.GetAllFinalScoreByMethodIDRepository(methodID)
 	if err != nil {
 		response := map[string]string{"error": "ID tidak sesuai"}
@@ -217,7 +214,6 @@ func (service *scoreService) CreateReportByMethodIDService(ctx *gin.Context) {
 		return
 	}
 
-	// Buat entri laporan utama dahulu
 	newReport := report.Report{
 		ReportCode: fmt.Sprintf("LAP-%d-%d", methodID, time.Now().Unix()),
 		MethodID:   methodID,
@@ -226,7 +222,6 @@ func (service *scoreService) CreateReportByMethodIDService(ctx *gin.Context) {
 		UpdatedAt:  time.Now(),
 	}
 
-	// Simpan laporan utama ke database
 	err = service.repository.CreateReportFinalScoreByMethodIDRepository(&newReport)
 	if err != nil {
 		response := map[string]string{"error": "gagal membuat laporan utama"}
@@ -234,9 +229,7 @@ func (service *scoreService) CreateReportByMethodIDService(ctx *gin.Context) {
 		return
 	}
 
-	// Iterate over final scores and create report detail entries
 	for _, score := range finalScores {
-		// Create a new report detail entry
 		reportDetail := report.ReportDetail{
 			MethodID:   methodID,
 			ProductID:  score.ProductID,
@@ -273,13 +266,11 @@ func (service *scoreService) CreateReportByMethodIDService(ctx *gin.Context) {
 }
 
 func (service *scoreService) utilityScoreSMART(methodID int) error {
-	// Step 1: Retrieve all criteria to get weights and types
 	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
 	if err != nil {
 		return fmt.Errorf("gagal mengambil data kriteria: %v", err)
 	}
 
-	// Step 2: Retrieve all scores
 	scores, err := service.criteriaScoreRepository.GetAllCriteriaScoreRepository()
 	if err != nil {
 		return fmt.Errorf("gagal mengambil data nilai kriteria: %v", err)
@@ -289,26 +280,23 @@ func (service *scoreService) utilityScoreSMART(methodID int) error {
 		return fmt.Errorf("data nilai kriteria masih kosong")
 	}
 
-	// Step 3: Create maps for criteria types
 	criteriaTypes := make(map[int]string)
 	for _, criterion := range criteriaList {
 		criteriaTypes[criterion.ID] = criterion.Type
 	}
 
-	// Step 4: Group normalized scores by criteria
+	// Membuat map untuk score berdasarkan kriteria
 	scoreByCriteria := make(map[int][]float64)
 	for _, score := range scores {
 		scoreByCriteria[score.CriteriaID] = append(scoreByCriteria[score.CriteriaID], score.Score)
 	}
 
-	// Step 5: Calculate ScoreOne based on normalized scores
 	for _, criteria := range criteriaList {
 		scoreValues := scoreByCriteria[criteria.ID]
 		if len(scoreValues) == 0 {
 			continue
 		}
 
-		// Find min and max from normalized scores
 		minNorm := scoreValues[0]
 		maxNorm := scoreValues[0]
 		for _, value := range scoreValues {
@@ -320,7 +308,7 @@ func (service *scoreService) utilityScoreSMART(methodID int) error {
 			}
 		}
 
-		// Calculate ScoreOne for each score based on criteria type
+		// Menghitung berdasarkan tipe kriteria
 		for _, score := range scores {
 			if score.CriteriaID == criteria.ID {
 				var scoreOne float64
@@ -418,7 +406,6 @@ func (service *scoreService) normalizeScoreMOORA(methodID int) error {
 }
 
 func (service *scoreService) scoreOneTimesWeightByMethodID(methodID int) error {
-	// Step 1: Retrieve all scores for the given methodID
 	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
 	if err != nil {
 		return fmt.Errorf("gagal mengambil data nilai: %v", err)
@@ -428,32 +415,29 @@ func (service *scoreService) scoreOneTimesWeightByMethodID(methodID int) error {
 		return fmt.Errorf("data nilai masih kosong")
 	}
 
-	// Step 2: Retrieve all criteria to get weights and types
 	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
 	if err != nil {
 		return fmt.Errorf("gagal mengambil data kriteria: %v", err)
 	}
 
-	// Step 3: Create maps for criteria weight
+	// Membuat map untuk bobot kriteria
 	criteriaWeight := make(map[int]float64)
 	for _, criterion := range criteriaList {
 		criteriaWeight[criterion.ID] = criterion.Weight
 	}
 
-	// Step 4: Group normalized scores by criteria
+	// Membuat map untuk nilai normalisasi dari kriteria
 	scoreOneByCriteria := make(map[int][]float64)
 	for _, score := range scores {
 		scoreOneByCriteria[score.CriteriaID] = append(scoreOneByCriteria[score.CriteriaID], score.ScoreOne)
 	}
 
-	// Step 5: Calculate ScoreTwo based on ScoreOne scores
 	for _, criteria := range criteriaList {
 		scoreOne := scoreOneByCriteria[criteria.ID]
 		if len(scoreOne) == 0 {
 			continue
 		}
 
-		// Calculate ScoreTwo for each score based on criteria weight
 		for _, score := range scores {
 			if score.CriteriaID == criteria.ID {
 				var scoreTwo float64
@@ -463,7 +447,7 @@ func (service *scoreService) scoreOneTimesWeightByMethodID(methodID int) error {
 				// Mengalikan ScoreOne dengan bobot kriteria
 				scoreTwo = score.ScoreOne * weight
 
-				// Update score with ScoreOne value
+				// Update scoreTwo
 				score.ScoreTwo = scoreTwo
 				err = service.repository.UpdateScoreByMethodIDRepository(methodID, &score)
 				if err != nil {
@@ -477,7 +461,6 @@ func (service *scoreService) scoreOneTimesWeightByMethodID(methodID int) error {
 }
 
 func (service *scoreService) createFinalScoresSMART(methodID int) error {
-	// Ambil semua score untuk method ini
 	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
 	if err != nil {
 		return fmt.Errorf("gagal mengambil data nilai: %v", err)
@@ -487,7 +470,6 @@ func (service *scoreService) createFinalScoresSMART(methodID int) error {
 		return fmt.Errorf("data nilai masih kosong")
 	}
 
-	// Buat map untuk menyimpan total score per produk
 	productScores := make(map[int]float64)
 
 	// Jumlahkan ScoreTwo untuk setiap produk
@@ -495,7 +477,6 @@ func (service *scoreService) createFinalScoresSMART(methodID int) error {
 		productScores[score.ProductID] += score.ScoreTwo
 	}
 
-	// Simpan final score untuk setiap produk
 	for productID, totalScore := range productScores {
 		finalScore := &final_score.FinalScore{
 			ProductID:  productID,
@@ -513,19 +494,16 @@ func (service *scoreService) createFinalScoresSMART(methodID int) error {
 }
 
 func (service *scoreService) createFinalScoresMOORA(methodID int) error {
-	// Ambil semua score untuk method ini
 	scores, err := service.repository.GetAllScoreByMethodIDRepository(methodID)
 	if err != nil {
 		return fmt.Errorf("gagal mengambil data nilai kriteria: %v", err)
 	}
 
-	// Ambil semua kriteria untuk mendapatkan tipe kriteria (benefit/cost)
 	criteriaList, err := service.criteriaRepository.GetAllCriteriaRepository()
 	if err != nil {
 		return fmt.Errorf("gagal mengambil data kriteria: %v", err)
 	}
 
-	// Buat map untuk menyimpan tipe kriteria
 	criteriaTypes := make(map[int]string)
 	for _, criteria := range criteriaList {
 		criteriaTypes[criteria.ID] = criteria.Type
