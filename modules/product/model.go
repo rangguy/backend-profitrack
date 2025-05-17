@@ -7,12 +7,12 @@ import (
 type Product struct {
 	ID           int       `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
 	Name         string    `gorm:"varchar(50);UNIQUE;not null" json:"name"`
-	PurchaseCost int       `gorm:"integer;not null" json:"purchase_cost"`
-	PriceSale    int       `gorm:"integer;not null" json:"price_sale"`
-	Profit       int       `gorm:"integer" json:"profit"`
+	PurchaseCost int       `gorm:"type:integer;not null" json:"purchase_cost"`
+	PriceSale    int       `gorm:"type:integer;not null" json:"price_sale"`
+	Profit       int       `gorm:"type:integer" json:"profit"`
 	Unit         string    `gorm:"varchar(25)" json:"unit"`
-	Stock        int       `gorm:"integer" json:"stock"`
-	Sold         int       `gorm:"integer" json:"sold"`
+	Stock        int       `gorm:"type:smallint" json:"stock"`
+	Sold         int       `gorm:"type:smallint" json:"sold"`
 	CreatedAt    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
