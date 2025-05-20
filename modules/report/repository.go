@@ -25,7 +25,7 @@ func (r *reportRepository) CountReportsRepository() (total int64, err error) {
 }
 
 func (r *reportRepository) GetAllReportsRepository() (result []Report, err error) {
-	err = r.DB.Find(&result).Error
+	err = r.DB.Order("id DESC").Find(&result).Error
 	return
 }
 
